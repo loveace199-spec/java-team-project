@@ -8,12 +8,12 @@ if errorlevel 1 (
   exit /b 1
 )
 if not exist bin mkdir bin
-javac -encoding UTF-8 -d bin -sourcepath src src\prototype\App.java
+javac -encoding UTF-8 -d bin -sourcepath src src\game\App.java
 if errorlevel 1 (
   echo Compilation failed. Please share the error above.
   pause
   exit /b 1
 )
-java -cp "bin;src" prototype.App
+java -cp "bin;src" game.App
 if errorlevel 1 pause
 endlocal
