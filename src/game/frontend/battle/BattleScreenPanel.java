@@ -122,6 +122,7 @@ public final class BattleScreenPanel extends JPanel {
         gameOver.setVisible(false);
         effects.cancel();recentActions.clear();history.setText("");
         battle.reset();
+        board.resetEffects(); // 체력이 처음으로 돌아갈 때 회복 연출이 나오지 않게
         clash.show(null,null,"공격 → 방어 → 피해 판정");
         victoryReported = false;
         message.setText("새 전투를 준비합니다.");
@@ -259,13 +260,16 @@ public final class BattleScreenPanel extends JPanel {
                 hand.getComponent(i).setBounds(slot);
             }
 
-            title.setBounds((w - 320) / 2, 8, 320, 34);
+
             turnBanner.setBounds((w - 360) / 2, (h - 100) / 2, 360, 100);
             // 첨부 표시 기준: 오른쪽 상단 기둥의 2번 위치에 메뉴를 둡니다.
             int gearX=(int)(w*.95)-27;
             // 설정 버튼 높이: 0.16을 더 작은 값(예: 0.08)으로 바꾸면 위로 이동합니다.
             int gearY=(int)(h*.08)-27;
             gearButton.setBounds(gearX,gearY,54,54);
+            // 단계·턴·뽑기·버림 정보: 상대 초상화 오른쪽, 톱니바퀴 버튼 왼쪽에 둡니다.
+            int titleWidth=320;
+            title.setBounds(Math.max((w+130)/2+20, gearX-titleWidth-14),gearY+10,titleWidth,34);
             battleMenu.setBounds(Math.min(gearX-120,w-210),gearY+60,196,108);
             message.setBounds(18, h - 44, Math.min(430, w / 3), 32);
             // 하스스톤처럼 오른쪽 중앙, 내 카드 보관함 위에 턴 종료 버튼을 배치합니다.
