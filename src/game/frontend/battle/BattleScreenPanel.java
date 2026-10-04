@@ -18,6 +18,8 @@ public final class BattleScreenPanel extends JPanel {
     private final BattleBoardPanel board;
     private final HandPanel hand = new HandPanel();
     private final BattleEffectOverlay effects=new BattleEffectOverlay();
+    // 손패 카드에 마우스를 올리면 뜨는 설명 상자
+    private final CardInfoPopup cardInfo=new CardInfoPopup();
     private final JTextArea history=new JTextArea();
     private final java.util.Deque<String> recentActions=new java.util.ArrayDeque<>();
     private final int stage;
@@ -74,6 +76,7 @@ public final class BattleScreenPanel extends JPanel {
         message.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         hand.setOpaque(false);
         hand.setLayout(null); // 프레임 슬롯과 버튼 위치를 같은 좌표로 맞춥니다.
+        hand.setHoverHandlers(this::showCardInfo, cardInfo::hidePopup);
         history.setEditable(false);history.setFocusable(false);history.setLineWrap(true);history.setWrapStyleWord(true);
         history.setFont(Theme.font(Font.PLAIN,12));history.setForeground(Theme.TEXT);
         history.setBackground(new Color(9,15,23));
@@ -230,6 +233,7 @@ public final class BattleScreenPanel extends JPanel {
             add(endTurn, JLayeredPane.MODAL_LAYER);
             add(history,JLayeredPane.MODAL_LAYER);
             add(effects,JLayeredPane.DRAG_LAYER);
+            add(cardInfo,Integer.valueOf(JLayeredPane.DRAG_LAYER+5));
             add(clash,JLayeredPane.PALETTE_LAYER);
             add(skipDefense,JLayeredPane.MODAL_LAYER);
             add(gameOver,Integer.valueOf(JLayeredPane.DRAG_LAYER+10));
@@ -334,6 +338,26 @@ public final class BattleScreenPanel extends JPanel {
         if(hand.getParent()!=null) {hand.getParent().doLayout();hand.getParent().repaint();}
         board.repaint();
         endTurn.setEnabled(!effects.isPlaying() && !battle.isOver() && turnPhase == TurnPhase.PLAYER_ACTIVE);
+    }
+
+    /** 손패 index 번째 카드 위에 설명 상자를 띄웁니다. 사용할 수 없으면 그 이유도 보여줍니다. */
+    private void showCardInfo(CardView view, int index) {
+        var cards=battle.hand();
+        if(index<0 || index>=cards.size() || view.getParent()==null) return;
+        var card=cards.get(index);
+        String status=null;
+        if(battle.isOver()) status="전투 종료";
+        else if(effects.isPlaying()) status="연출 중";
+        else if(turnPhase==TurnPhase.DEFENSE) status=card.type()==game.backend.model.CardType.DEFENSE
+            ? (card.cost()>battle.energy()?"에너지 부족":null) : "지금은 방어 카드만 사용";
+        else if(turnPhase!=TurnPhase.PLAYER_ACTIVE) status="내 턴이 아님";
+        else if(card.cost()>battle.energy()) status="에너지 부족 ("+battle.energy()+"/"+card.cost()+")";
+        else if(card.type()==game.backend.model.CardType.DEFENSE) status="상대 공격 때 사용";
+        else if(!battle.canPlay(index)) status="이번 턴에 공격/회복 카드를 이미 사용";
+        java.awt.Container layer=cardInfo.getParent();
+        if(layer==null) return;
+        Rectangle anchor=javax.swing.SwingUtilities.convertRectangle(view.getParent(),view.getBounds(),layer);
+        cardInfo.showFor(card,status,anchor,layer.getSize());
     }
 
     private void recordAction(String actor,String text) {
