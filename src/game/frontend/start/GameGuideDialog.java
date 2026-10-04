@@ -100,7 +100,7 @@ public final class GameGuideDialog extends JDialog {
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke("ESCAPE"),
             JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        // 화면의 85% 안에서 그림 비율(1672×941)대로 창 크기를 정합니다.
+        // 화면의 85% 안에서 그림 비율대로 창 크기를 정합니다.
         Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
         int width = Math.min(1180, (int) (screen.width * 0.85));
         int pictureHeight = width * image.getHeight() / image.getWidth();

@@ -27,6 +27,13 @@ public final class BattleBoardPanel extends JPanel {
     // Swing Timer가 약 60 FPS로 repaint()를 요청합니다. 그림은 paintComponent에서만 갱신합니다.
     private final Timer animationTimer;
     private long animationStartedAt;
+
+    // ── 피격·회복 연출 ──
+    // 체력이 바뀌면(맞거나 회복하면) 그 순간을 기록해 두고, 몇 백 ms 동안 흔들림·번쩍임·숫자 떠오름을 그립니다.
+    private static final long SHAKE_MS = 380, FLASH_MS = 450, FLOAT_MS = 1000;
+    private record HpChange(boolean enemy, int amount, long startedAt) { }
+    private final java.util.List<HpChange> hpChanges = new java.util.ArrayList<>();
+    private int lastEnemyHp = -1, lastPlayerHp = -1;
     private int turnSeconds = 30;
     private int turnSecondsMax = 30;
     private boolean turnTimerRunning;
@@ -113,18 +120,11 @@ public final class BattleBoardPanel extends JPanel {
         // 고정 픽셀 좌표가 아니므로 창 크기를 바꿔도 두 캐릭터가 각 프레임 안에 유지됩니다.
         int enemyY = (int) (h * 0.105);
         int playerY = (int) (h * 0.845);
+        trackHpChanges();
         portrait(g, cx, enemyY, true, battle.enemyHp(), DemoBattle.ENEMY_MAX_HP);
         portrait(g, cx, playerY, false, battle.playerHp(), battle.playerMaxHp());
-        g.setFont(Theme.font(Font.BOLD, 16));
-        g.setColor(new Color(235, 180, 160));
-        g.drawString("상대 · " + enemy.name(), cx + 100, enemyY - 24);
-        g.setFont(Theme.font(Font.PLAIN, 14));
-        g.drawString(battle.isOver() ? "전투 종료" : "다음 행동  /  공격 " + battle.enemyIntent(), cx + 100, enemyY + 5);
-        g.setColor(new Color(173, 217, 227));
-        g.setFont(Theme.font(Font.BOLD, 16));
-        g.drawString("나 · 플레이어", cx - 65, playerY - 76);
-        g.setFont(Theme.font(Font.PLAIN, 14));
-        g.drawString("방어도 " + battle.block() + "   |   다음 공격 +" + battle.bonus(), cx - 65, playerY - 57);
+        // 초상화 옆 이름·상태 글자는 화면을 깔끔하게 하려고 표시하지 않습니다.
+        paintFloatingNumbers(g, cx, enemyY, playerY);
         g.setFont(Theme.font(Font.BOLD, 18));
         g.setColor(Theme.GOLD);
         g.drawString("에너지  " + battle.energy() + " / 3", 48, h - 72);
@@ -226,6 +226,8 @@ public final class BattleBoardPanel extends JPanel {
         // enemy=true는 상대 색상, false는 플레이어 색상입니다.
         // 체력바 길이는 현재 체력 / 최대 체력의 비율로 계산합니다.
         // 별도 바탕과 둥근 테두리를 그리지 않고 배경 이미지의 초상화 틀을 사용합니다.
+        long now = System.nanoTime();
+        x += shakeOffset(enemy, now); // 맞으면 좌우로 흔들림
         if (enemy) {
             // 등장 시 페이드인하고, 이후에는 위아래로 천천히 떠 있는 효과를 줍니다.
             double elapsed = Math.max(0, (System.nanoTime() - animationStartedAt) / 1_000_000_000.0);
@@ -247,12 +249,89 @@ public final class BattleBoardPanel extends JPanel {
             int width = (int) (playerImage.getWidth() * scale), height = (int) (playerImage.getHeight() * scale);
             g.drawImage(playerImage, x - width / 2, y - 50, width, height, null);
         }
+        paintFlash(g, x, y, enemy, now); // 맞으면 빨강, 회복하면 초록으로 번쩍임
         g.setColor(new Color(14, 21, 29));
         g.fillRoundRect(x - 62, y + 35, 124, 23, 12, 12);
         g.setColor(new Color(125, 48, 58));
         g.fillRoundRect(x - 60, y + 37, (int) (120 * hp / (double) max), 19, 10, 10);
         g.setFont(Theme.font(Font.BOLD, 13));
         center(g, "체력 " + hp + " / " + max, x, y + 51, Color.WHITE);
+    }
+
+    /** 재시작 등으로 체력이 한 번에 바뀔 때 연출이 나오지 않도록 기록을 지웁니다. */
+    public void resetEffects() {
+        hpChanges.clear();
+        lastEnemyHp = -1;
+        lastPlayerHp = -1;
+    }
+
+    /** 이전 그림 이후 체력이 바뀌었으면 연출을 하나 추가합니다. */
+    private void trackHpChanges() {
+        long now = System.nanoTime();
+        int enemyHp = battle.enemyHp(), playerHp = battle.playerHp();
+        if (lastEnemyHp >= 0 && enemyHp != lastEnemyHp) hpChanges.add(new HpChange(true, enemyHp - lastEnemyHp, now));
+        if (lastPlayerHp >= 0 && playerHp != lastPlayerHp) hpChanges.add(new HpChange(false, playerHp - lastPlayerHp, now));
+        lastEnemyHp = enemyHp;
+        lastPlayerHp = playerHp;
+        hpChanges.removeIf(c -> (now - c.startedAt()) / 1_000_000 > FLOAT_MS);
+    }
+
+    /** 가장 최근 피격 직후 짧게 좌우로 흔들리는 양(px). 점점 약해집니다. */
+    private int shakeOffset(boolean enemy, long now) {
+        for (int i = hpChanges.size() - 1; i >= 0; i--) {
+            HpChange c = hpChanges.get(i);
+            if (c.enemy() != enemy || c.amount() >= 0) continue;
+            double ms = (now - c.startedAt()) / 1_000_000.0;
+            if (ms > SHAKE_MS) return 0;
+            return (int) Math.round(Math.sin(ms / 22.0) * 8 * (1 - ms / SHAKE_MS));
+        }
+        return 0;
+    }
+
+    /** 초상화 위에 빨간(피격)/초록(회복) 빛을 덮습니다. */
+    private void paintFlash(Graphics2D g, int x, int y, boolean enemy, long now) {
+        for (HpChange c : hpChanges) {
+            if (c.enemy() != enemy) continue;
+            double ms = (now - c.startedAt()) / 1_000_000.0;
+            if (ms > FLASH_MS) continue;
+            int alpha = (int) (150 * (1 - ms / FLASH_MS));
+            Color color = c.amount() < 0 ? new Color(220, 40, 40, alpha) : new Color(80, 230, 130, alpha);
+            Graphics2D f = (Graphics2D) g.create();
+            f.setColor(color);
+            f.fillRoundRect(x - 64, y - 52, 128, 98, 18, 18);
+            if (c.amount() > 0) { // 회복은 바깥으로 퍼지는 고리도 함께
+                int r = 50 + (int) (ms / FLASH_MS * 30);
+                f.setStroke(new BasicStroke(3f));
+                f.setColor(new Color(120, 255, 160, alpha));
+                f.drawOval(x - r, y - 5 - r, r * 2, r * 2);
+            }
+            f.dispose();
+        }
+    }
+
+    /** -5 / +8 같은 숫자가 초상화 옆에서 위로 떠오르며 사라집니다. */
+    private void paintFloatingNumbers(Graphics2D g, int cx, int enemyY, int playerY) {
+        long now = System.nanoTime();
+        int[] stack = new int[2]; // 같은 쪽에 연속으로 생기면 조금씩 옆으로 비켜 그림
+        for (HpChange c : hpChanges) {
+            double t = (now - c.startedAt()) / 1_000_000.0 / FLOAT_MS;
+            if (t < 0 || t > 1) continue;
+            int side = c.enemy() ? 0 : 1;
+            int baseY = c.enemy() ? enemyY : playerY;
+            int x = cx + 78 + stack[side]++ * 34;
+            // 적은 화면 위쪽 끝에 붙어 있어 조금 아래에서 시작합니다.
+            int y = baseY + (c.enemy() ? 34 : -10) - (int) (t * 46);
+            float alpha = (float) (t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3);
+            String text = (c.amount() > 0 ? "+" : "") + c.amount();
+            Graphics2D f = (Graphics2D) g.create();
+            f.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, alpha)));
+            f.setFont(Theme.font(Font.BOLD, 30));
+            f.setColor(new Color(0, 0, 0, 200)); // 글자 테두리(그림자)
+            for (int dx = -2; dx <= 2; dx += 2) for (int dy = -2; dy <= 2; dy += 2) f.drawString(text, x + dx, y + dy);
+            f.setColor(c.amount() < 0 ? new Color(255, 90, 80) : new Color(110, 240, 140));
+            f.drawString(text, x, y);
+            f.dispose();
+        }
     }
 
     private void center(Graphics2D g, String text, int x, int y, Color color) {
