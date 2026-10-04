@@ -1,11 +1,11 @@
 package game.frontend.legacy;
 
 import game.frontend.common.StartComponents;
-import game.frontend.common.Theme;
 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import game.frontend.common.Theme;
 
 /** 이전 시안 3(보존용). 현재 시작 화면에서 사용하지 않으며 비교 렌더링 테스트에 사용합니다. */
 public final class MinimalStartPanel extends JPanel {

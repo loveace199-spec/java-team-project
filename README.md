@@ -47,7 +47,7 @@ java.util.Random
 
 ```text
 JSON + Gson — 추천
-= 카드 20종 / 일반 적 5종 / 보스 1종의 정의 데이터 관리 (현재: src/data/cards.csv, Java 기본 기능으로 읽음)
+= 카드 20종 / 일반 적 5종 / 보스 1종의 정의 데이터 관리 (현재: database/CardCatalog, StageEnemy)
 = 코드 수정 없이 비용과 효과 수치 조정
 
 로컬 JSON 파일
@@ -74,19 +74,19 @@ src/
 │   ├── frontend/                🖥️ Swing 화면 — 입력을 받고 결과를 그린다
 │   │   ├── common/              공통 색상·글꼴(Theme), 공통 버튼(StartComponents)
 │   │   ├── start/               시작 화면, 메인 창(StartFrame), 게임 설명·설정 창
-│   │   ├── stage/               1~5단계 선택 화면
-│   │   ├── battle/              전투 화면, 카드 그림(CardView), 손패(HandPanel)
+│   │   ├── stage/               1~5단계 선택 화면, 3단계 상점 안내
+│   │   ├── deck/                내 덱 편집 (20장, 같은 카드 최대 2장)
+│   │   ├── battle/              전투 화면·턴 타이머·공격/방어 대결(Clash)·효과 애니메이션·카드 그림
 │   │   └── legacy/              이전 시안 보존용 (게임 흐름에서 사용 안 함)
 │   ├── backend/                 ⚙️ 게임 규칙 — Swing 을 모른다
-│   │   ├── model/               카드, 카드 종류, 플레이어(Player), 적(Enemy), 단계 진행도
-│   │   └── battle/              턴 진행, 카드 효과 적용, 승패 판정 (Battle)
-│   ├── database/                🗄️ 데이터 파일 읽기·쓰기 — DB 서버 없이 로컬 파일
-│   │   ├── CardCatalog.java     src/data/cards.csv 카드 정의 불러오기
+│   │   ├── model/               카드, 카드 종류, 플레이어, 적, 내 덱(PlayerDeck), 단계 진행도
+│   │   └── battle/              전투 규칙(Battle) + 화면용 연결 클래스(DemoBattle)
+│   ├── database/                🗄️ 데이터 — DB 서버 없이 코드·로컬 파일
+│   │   ├── CardCatalog.java     카드 20종 정의
+│   │   ├── StageEnemy.java      단계별 적 이름·이미지
 │   │   └── SaveStore.java       사용자 폴더에 진행도·설정 저장 (화면과 아직 미연결)
-│   └── test/                    창 없이 실행하는 검사 (main 실행 → PASS 출력)
-├── data/
-│   └── cards.csv                카드 이름·비용·수치 (코드 수정 없이 밸런스 조정)
-└── assets/                      이미지 PNG
+│   └── test/                    창 없이 실행하는 검사 11개 (main 실행 → PASS 출력)
+└── assets/                      이미지 PNG (배경, 적, 카드 그림)
 ```
 
 ### 호출 방향 (꼭 지키기)
@@ -96,10 +96,10 @@ frontend  →  backend  →  database
 (화면)        (규칙)        (데이터 파일)
 ```
 
-- **frontend** 는 계산하지 않는다. 버튼 입력을 backend 에 전달하고 돌려받은 상태를 그린다. database 를 직접 import 하지 않는다.
+- **frontend** 는 계산하지 않는다. 버튼 입력을 backend 에 전달하고 돌려받은 상태를 그린다. (예외: 덱 편집·적 그림은 database 의 카드 목록·적 이미지 정보를 직접 읽는다)
 - **backend** 는 `javax.swing`, `java.awt` 를 import 하지 않는다. 그래서 창 없이 테스트할 수 있다.
 - **database** 는 파일을 읽고 쓰기만 한다. 게임 규칙을 넣지 않는다.
-- 카드 정의 데이터(`cards.csv`)와 실제 보유 카드의 강화 상태는 별도로 관리한다.
+- 카드 정의 데이터(`CardCatalog`)와 실제 보유 카드(`PlayerDeck`)는 별도로 관리한다.
 
 ### 담당 예시 (6인)
 

@@ -1,12 +1,11 @@
 package game.test;
 
-import game.backend.battle.Battle;
+import javax.swing.SwingUtilities;
+import java.awt.image.BufferedImage;
+import game.backend.battle.DemoBattle;
 import game.database.CardCatalog;
 import game.frontend.battle.CardView;
 import game.frontend.battle.HandPanel;
-
-import javax.swing.SwingUtilities;
-import java.awt.image.BufferedImage;
 
 public final class PrototypeCheck {
     private static void check(boolean condition, String message) {
@@ -14,7 +13,7 @@ public final class PrototypeCheck {
     }
 
     public static void main(String[] args) throws Exception {
-        Battle battle = new Battle();
+        DemoBattle battle = new DemoBattle();
         battle.play(3); // 집중
         battle.play(0); // 베기: 6 + 2
         check(battle.enemyHp() == 27 && battle.energy() == 2, "공격과 비용");

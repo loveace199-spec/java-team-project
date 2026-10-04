@@ -1,70 +1,58 @@
 package game.database;
 
+import java.util.List;
 import game.backend.model.Card;
 import game.backend.model.CardType;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
-/**
- * [database] 카드 정의 데이터를 불러옵니다.
- * 카드 이름·비용·수치는 코드가 아니라 src/data/cards.csv 에서 수정합니다.
- * 외부 라이브러리 없이 Java 기본 기능만 사용합니다.
- */
+/** 카드 이름, 비용, 효과 설명을 수정하는 곳입니다. 수치는 모두 임시입니다. */
 public final class CardCatalog {
-    public static final String CARD_FILE = "/data/cards.csv";
-    private static List<Card> cache;
-
     private CardCatalog() { }
 
-    /** 전체 카드 정의 목록 (파일 순서 그대로). 처음 한 번만 파일을 읽습니다. */
-    public static synchronized List<Card> all() {
-        if (cache == null) {
-            try (InputStream in = CardCatalog.class.getResourceAsStream(CARD_FILE)) {
-                if (in == null) throw new IllegalStateException("카드 데이터 파일이 없습니다: " + CARD_FILE);
-                cache = Collections.unmodifiableList(parse(in));
-            } catch (IOException e) {
-                throw new IllegalStateException("카드 데이터를 읽지 못했습니다.", e);
-            }
+    /** 첨부 이미지의 순서: 공격 / 방어 / 중독 주문 / 회복, 각 5종. */
+    public record Effect(int damage, int block, int heal, int poison, int duration) { }
+    private static final String[] NAMES = {
+        "강철의 일격", "신속한 화살", "낡은 총탄", "연속 베기", "필살의 일격",
+        "방패 올리기", "반격의 자세", "철벽 방어", "방패 돌격", "불굴의 수호",
+        "독의 칼날", "맹독 화살", "독성 구름", "바이러스 주입", "죽음의 독",
+        "치유의 손길", "신성한 일격", "회복의 기도", "생명의 의지", "축복의 심판"
+    };
+    private static final Effect[] EFFECTS = {
+        new Effect(5,0,0,0,0), new Effect(4,0,0,0,0), new Effect(6,0,0,0,0), new Effect(8,0,0,0,0), new Effect(14,0,0,0,0),
+        new Effect(2,3,0,0,0), new Effect(3,4,0,0,0), new Effect(4,6,0,0,0), new Effect(7,5,0,0,0), new Effect(8,10,0,0,0),
+        new Effect(0,0,0,4,2), new Effect(0,0,0,5,2), new Effect(0,0,0,7,2), new Effect(0,0,0,6,3), new Effect(0,0,0,10,4),
+        new Effect(3,0,5,0,0), new Effect(4,0,4,0,0), new Effect(6,0,10,0,0), new Effect(8,0,8,0,0), new Effect(12,0,15,0,0)
+    };
+    public static int artworkIndex(Card card) {
+        for (int i=0;i<NAMES.length;i++) if (card.id().equals("crafted-"+i)) return i;
+        return -1;
+    }
+    public static Effect effect(Card card) {
+        int index=artworkIndex(card);
+        return index<0 ? null : EFFECTS[index];
+    }
+    public static List<Card> allCards() {
+        var cards=new java.util.ArrayList<Card>();
+        for(int i=0;i<20;i++) {
+            Effect e=EFFECTS[i];
+            CardType type=new CardType[]{CardType.ATTACK,CardType.DEFENSE,CardType.SPELL,CardType.HEAL}[i/5];
+            int cost=new int[]{1,1,i<5?1:2,2,3}[i%5];
+            String description=e.poison()>0 ? e.duration()+"턴 동안 매 턴 중독 피해 "+e.poison()
+                : (e.block()>0 ? "방어도 "+e.block()+" · " : "")+(e.heal()>0 ? "체력 "+e.heal()+" 회복 · " : "")+"피해 "+e.damage();
+            cards.add(new Card("crafted-"+i,NAMES[i],type,cost,e.damage(),description));
         }
-        return cache;
+        return List.copyOf(cards);
     }
 
-    /** 식별자로 카드 찾기. 없으면 예외. */
-    public static Card byId(String id) {
-        for (Card card : all()) if (card.id().equals(id)) return card;
-        throw new IllegalArgumentException("없는 카드 식별자: " + id);
-    }
-
-    /** 시제품 손패: 매 턴 같은 카드 5장. 실제 덱/뽑기 구현 시 backend 에서 교체합니다. */
     public static List<Card> sampleHand() {
-        return all();
-    }
-
-    /** CSV 내용을 카드 목록으로 변환. 잘못된 줄은 몇 번째 줄인지 알려 줍니다. */
-    public static List<Card> parse(InputStream in) throws IOException {
-        List<Card> cards = new ArrayList<>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-        String line;
-        int lineNo = 0;
-        while ((line = reader.readLine()) != null) {
-            lineNo++;
-            line = line.replace("﻿", "").trim(); // 메모장 저장 시 붙는 BOM 제거
-            if (line.isEmpty() || line.startsWith("#")) continue;
-            String[] f = line.split(",", -1);
-            try {
-                if (f.length != 6) throw new IllegalArgumentException("항목 수가 6개가 아닙니다.");
-                cards.add(new Card(f[0].trim(), f[1].trim(), CardType.valueOf(f[2].trim()),
-                    Integer.parseInt(f[3].trim()), Integer.parseInt(f[4].trim()), f[5].trim()));
-            } catch (IllegalArgumentException e) {
-                throw new IllegalStateException(CARD_FILE + " " + lineNo + "번째 줄 오류: " + e.getMessage(), e);
-            }
-        }
-        return cards;
+        // [카드 제작] new Card(식별자, 표시 이름, 종류, 에너지 비용, 효과 수치, 설명).
+        // power의 의미는 종류마다 다릅니다: 피해 / 방어도 / 회복량 / 다음 공격 추가 피해.
+        // 설명은 수치에서 자동 생성되지 않습니다. 수치를 바꾸면 설명도 함께 수정하세요.
+        return List.of(
+            new Card("slash", "베기", CardType.ATTACK, 1, 6, "적에게 피해 6"),
+            new Card("guard", "방패", CardType.DEFENSE, 1, 5, "방어도 5 획득"),
+            new Card("heal", "응급처치", CardType.HEAL, 1, 4, "체력 4 회복"),
+            new Card("focus", "집중", CardType.SPELL, 0, 2, "이번 턴 다음 공격 피해 +2"),
+            new Card("heavy", "강타", CardType.ATTACK, 2, 11, "적에게 피해 11")
+        );
     }
 }

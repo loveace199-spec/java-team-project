@@ -30,3 +30,7 @@ work/
 *.bak
 
 # Keep Gradle/Maven wrapper JARs and game assets tracked.
+
+# 검사(test) 실행 시 프로젝트 루트에 생기는 미리보기 이미지
+/*.png
+/preview/

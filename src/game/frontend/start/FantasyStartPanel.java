@@ -1,13 +1,13 @@
 package game.frontend.start;
 
 import game.frontend.common.StartComponents;
-import game.frontend.common.Theme;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import game.frontend.common.Theme;
 
 /** 배경·로고·버튼은 독립적으로 교체할 수 있습니다. */
 public final class FantasyStartPanel extends JPanel {

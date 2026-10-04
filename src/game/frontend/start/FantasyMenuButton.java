@@ -1,10 +1,10 @@
 package game.frontend.start;
 
 import game.frontend.common.StartComponents;
-import game.frontend.common.Theme;
 
 import java.awt.*;
 import javax.swing.*;
+import game.frontend.common.Theme;
 
 /** 메뉴 외형과 키보드 선택. */
 public final class FantasyMenuButton extends JButton {
