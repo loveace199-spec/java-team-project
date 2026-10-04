@@ -6,6 +6,7 @@ import game.database.CardCatalog;
 import game.backend.model.Card;
 import game.backend.model.Player;
 import game.backend.model.Enemy;
+import game.backend.model.RunUpgrades;
 
 /** 병합된 전투 엔진. 백엔드 Player/Enemy로 상태를 관리하고 최신 덱·중독·대응 규칙을 계산합니다. */
 public final class Battle {
@@ -14,6 +15,8 @@ public final class Battle {
     public static final int MAX_ENERGY = Player.MAX_ENERGY;
     private final Player player = new Player();
     private final Enemy enemy = new Enemy();
+    // 상점 강화(공격 +1, 방어 +1, 체력 +10). 상점을 이용하지 않았으면 모두 0입니다.
+    private final RunUpgrades upgrades;
     private int turn;
     private final List<Card> hand = new ArrayList<>();
     private final List<Card> deck;
@@ -28,14 +31,17 @@ public final class Battle {
     // 중독은 각각 독립된 [피해, 남은 턴]으로 보관하고 상대 행동 전에 적용합니다.
     private final List<int[]> poisons = new ArrayList<>();
 
-    public Battle() { deck=null; reset(); }
-    public Battle(List<Card> cards) {
+    public Battle() { deck=null; upgrades=new RunUpgrades(); reset(); }
+    public Battle(List<Card> cards) { this(cards, new RunUpgrades()); }
+    public Battle(List<Card> cards, RunUpgrades upgrades) {
         if(!game.backend.model.PlayerDeck.valid(cards)) throw new IllegalArgumentException("잘못된 덱");
-        deck=List.copyOf(cards); reset();
+        if(upgrades==null) throw new IllegalArgumentException("강화 정보가 필요합니다.");
+        deck=List.copyOf(cards); this.upgrades=upgrades; reset();
     }
 
     public void reset() {
         // 전투를 처음 상태로 되돌립니다. 화면 디자인을 바꾸려면 이 파일은 건드리지 않아도 됩니다.
+        player.setMaxHp(Player.MAX_HP + upgrades.bonusHp());
         player.reset();
         enemy.reset();
         turn = 1;
@@ -139,6 +145,7 @@ public final class Battle {
     }
 
     public int playerHp() { return player.hp(); }
+    public int playerMaxHp() { return player.maxHp(); }
     /** 상대 공격을 공개하되 체력은 아직 변경하지 않습니다. 방어 선택 후에만 판정합니다. */
     public Card revealEnemyAttack() {
         if(isOver() || pendingAttack!=null) return null;
@@ -165,7 +172,10 @@ public final class Battle {
         if(pendingAttack==null) return "대기 중인 공격 없음";
         var effect=defense==null?null:CardCatalog.effect(defense);
         int shield=effect==null?0:effect.block(),counter=effect==null?0:effect.damage();
-        int damage=Math.max(0,pendingAttack.power()-shield);
+        // 상점 강화: 내 방어 카드는 방어량 +defenseBonus, 내 공격 카드는 피해 +attackBonus
+        if(pendingEnemy && defense!=null) shield+=upgrades.defenseBonus();
+        int attackPower=pendingAttack.power()+(pendingEnemy?0:upgrades.attackBonus());
+        int damage=Math.max(0,attackPower-shield);
         if(pendingEnemy) {player.takeDamage(damage);enemy.takeDamage(counter);}
         else {enemy.takeDamage(damage);player.takeDamage(counter);}
         pendingAttack=null;

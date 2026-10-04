@@ -21,6 +21,8 @@ public final class BattleBoardPanel extends JPanel {
     private final BufferedImage battlefield;
     // [상대 이미지 교체] src/assets의 파일과 아래 리소스 이름을 함께 변경하세요.
     private final BufferedImage enemyImage;
+    public static final String PLAYER_IMAGE = "/assets/player-hooded-knight-v1.png";
+    private final BufferedImage playerImage;
     private final StageEnemy enemy;
     // Swing Timer가 약 60 FPS로 repaint()를 요청합니다. 그림은 paintComponent에서만 갱신합니다.
     private final Timer animationTimer;
@@ -38,6 +40,9 @@ public final class BattleBoardPanel extends JPanel {
         enemy = StageEnemy.forStage(stage);
         battlefield = loadImage("/assets/battlefield-hidden-opponent-hand-v1.png", "전투 필드 배경");
         enemyImage = loadImage(enemy.imagePath(), enemy.name());
+        // 플레이어 초상화: 원본(1254×1254)에서 얼굴·어깨 부분만 잘라 사용합니다.
+        BufferedImage player = loadImage(PLAYER_IMAGE, "플레이어 이미지");
+        playerImage = player.getSubimage(290, 40, Math.min(675, player.getWidth() - 290), Math.min(515, player.getHeight() - 40));
         animationTimer = new Timer(16, event -> repaint());
         animationTimer.setCoalesce(true);
         setPreferredSize(new Dimension(1000, 360));
@@ -109,7 +114,7 @@ public final class BattleBoardPanel extends JPanel {
         int enemyY = (int) (h * 0.105);
         int playerY = (int) (h * 0.845);
         portrait(g, cx, enemyY, true, battle.enemyHp(), DemoBattle.ENEMY_MAX_HP);
-        portrait(g, cx, playerY, false, battle.playerHp(), DemoBattle.PLAYER_MAX_HP);
+        portrait(g, cx, playerY, false, battle.playerHp(), battle.playerMaxHp());
         g.setFont(Theme.font(Font.BOLD, 16));
         g.setColor(new Color(235, 180, 160));
         g.drawString("상대 · " + enemy.name(), cx + 100, enemyY - 24);
@@ -236,10 +241,11 @@ public final class BattleBoardPanel extends JPanel {
             g.drawImage(enemyImage, x - width / 2, y - 50 + floatY, width, height, null);
             g.setComposite(originalComposite);
         } else {
-            // 플레이어는 아직 임시 실루엣을 사용합니다.
-            g.setColor(new Color(90, 167, 193));
-            g.fillOval(x - 17, y - 35, 34, 34);
-            g.fillArc(x - 37, y + 2, 74, 62, 0, 180);
+            // 플레이어 초상화 (src/assets/player-hooded-knight-v1.png)
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            double scale = Math.min(124.0 / playerImage.getWidth(), 94.0 / playerImage.getHeight());
+            int width = (int) (playerImage.getWidth() * scale), height = (int) (playerImage.getHeight() * scale);
+            g.drawImage(playerImage, x - width / 2, y - 50, width, height, null);
         }
         g.setColor(new Color(14, 21, 29));
         g.fillRoundRect(x - 62, y + 35, 124, 23, 12, 12);

@@ -1,6 +1,6 @@
 package game.frontend.start;
 
-import game.frontend.stage.ShopPlaceholderPanel;
+import game.frontend.stage.ShopPanel;
 import game.frontend.stage.StageSelectPanel;
 
 import java.awt.*;
@@ -21,6 +21,8 @@ public final class StartFrame extends JFrame {
     private BattleScreenPanel battleScreen;
     private final StageProgress progress = new StageProgress();
     private final StageSelectPanel stageScreen;
+    // 상점 강화 상태. 이번 실행 동안 모든 전투에 적용됩니다.
+    private final game.backend.model.RunUpgrades upgrades = new game.backend.model.RunUpgrades();
     private final game.backend.model.PlayerDeck deck=new game.backend.model.PlayerDeck();
     public StartFrame() {
         super("게임 타이틀 (미정)");
@@ -42,7 +44,7 @@ public final class StartFrame extends JFrame {
             menu.focusStart();
         }, progress, this::showBattlePreview,()->{editor.beginEditing();pages.show(screens,"deck");});
         screens.add(stageScreen, "stages");
-        screens.add(new ShopPlaceholderPanel(() -> pages.show(screens, "stages"), () -> {
+        screens.add(new ShopPanel(upgrades, () -> pages.show(screens, "stages"), () -> {
             progress.complete(3);
             stageScreen.refreshProgress();
             pages.show(screens, "stages");
@@ -75,7 +77,7 @@ public final class StartFrame extends JFrame {
         }, stage, () -> {
             progress.complete(stage);
             stageScreen.refreshProgress();
-        }, deck.cards());
+        }, deck.cards(), upgrades);
         screens.add(battleScreen, "battle");
         // 시작 화면에서 사용하던 창 크기를 유지하고 내용만 전투 화면으로 전환합니다.
         pages.show(screens, "battle");
