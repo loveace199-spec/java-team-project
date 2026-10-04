@@ -1,22 +1,48 @@
 package game.frontend.start;
 
+import game.frontend.common.Images;
 import game.frontend.common.StartComponents;
-
-import java.awt.*;
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import game.frontend.common.Theme;
 
-/** 게임 설명은 시작 화면과 분리해 수정합니다. */
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+
+/**
+ * 시작 화면의 '게임 설명' 창.
+ * 기본으로 설명 그림(src/assets/game-guide-v1.png)을 보여주고,
+ * '전투 규칙 자세히' 버튼으로 글로 된 상세 규칙을 볼 수 있습니다.
+ */
 public final class GameGuideDialog extends JDialog {
+    public static final String IMAGE = "/assets/game-guide-v1.png";
+    private final CardLayout pages = new CardLayout();
+    private final JPanel pageHolder = new JPanel(pages);
+    private boolean showingRules;
+
     public GameGuideDialog(JFrame owner) {
         super(owner, "게임 설명", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        JPanel content = new JPanel(new BorderLayout(0, 20));
-        content.setBackground(Theme.BACKGROUND);
-        content.setBorder(new EmptyBorder(24, 28, 24, 28));
-        content.add(StartComponents.text("전투 규칙 안내", 23, Theme.TEXT), BorderLayout.NORTH);
-        // [게임 설명 수정] 아래 문자열을 바꾸면 안내 창 내용이 바뀝니다. \n은 줄바꿈입니다.
+        BufferedImage image = Images.load(IMAGE, "게임 설명 그림");
+
+        // ① 설명 그림: 창 크기에 맞춰 비율을 유지하며 그립니다.
+        JPanel picture = new JPanel() {
+            @Override protected void paintComponent(Graphics graphics) {
+                super.paintComponent(graphics);
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                Rectangle d = Images.fit(image, getWidth(), getHeight());
+                g.drawImage(image, d.x, d.y, d.width, d.height, null);
+                g.dispose();
+            }
+        };
+        picture.setBackground(Color.BLACK);
+        picture.getAccessibleContext().setAccessibleName(
+            "게임 설명: 20장의 카드로 시작, 체력을 관리하세요, 두 가지 승리 조건");
+
+        // ② 상세 전투 규칙 (기존 글 설명)
+        // [게임 설명 수정] 아래 문자열을 바꾸면 상세 규칙 내용이 바뀝니다. \n은 줄바꿈입니다.
         JTextArea guide = new JTextArea(
             "전투 규칙\n\n"
             + "1. 공격 / 회복 카드\n한 턴에 한 장만 사용할 수 있습니다.\n"
@@ -45,18 +71,46 @@ public final class GameGuideDialog extends JDialog {
         guide.setFont(Theme.font(Font.PLAIN, 15));
         guide.setForeground(Theme.TEXT);
         guide.setBackground(Theme.BACKGROUND);
+        guide.setBorder(new EmptyBorder(18, 24, 18, 24));
         guide.setCaretPosition(0);
         JScrollPane scroll = new JScrollPane(guide);
         scroll.setBorder(null);
-        scroll.setPreferredSize(new Dimension(600, 490));
-        content.add(scroll, BorderLayout.CENTER);
+
+        pageHolder.add(picture, "picture");
+        pageHolder.add(scroll, "rules");
+
+        JButton toggle = StartComponents.button("전투 규칙 자세히", Theme.PANEL, Theme.TEXT, () -> { });
+        toggle.addActionListener(e -> {
+            showingRules = !showingRules;
+            pages.show(pageHolder, showingRules ? "rules" : "picture");
+            toggle.setText(showingRules ? "그림으로 보기" : "전투 규칙 자세히");
+        });
         JButton close = StartComponents.button("확인", Theme.GOLD, Theme.BACKGROUND, this::dispose);
-        content.add(close, BorderLayout.SOUTH);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 14, 10));
+        buttons.setBackground(Color.BLACK);
+        buttons.add(toggle);
+        buttons.add(close);
+
+        JPanel content = new JPanel(new BorderLayout());
+        content.setBackground(Color.BLACK);
+        content.add(pageHolder, BorderLayout.CENTER);
+        content.add(buttons, BorderLayout.SOUTH);
         setContentPane(content);
         getRootPane().setDefaultButton(close);
         getRootPane().registerKeyboardAction(e -> dispose(), KeyStroke.getKeyStroke("ESCAPE"),
             JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        // 화면의 85% 안에서 그림 비율(1672×941)대로 창 크기를 정합니다.
+        Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        int width = Math.min(1180, (int) (screen.width * 0.85));
+        int pictureHeight = width * image.getHeight() / image.getWidth();
+        if (pictureHeight > screen.height * 0.85 - 70) {
+            pictureHeight = (int) (screen.height * 0.85 - 70);
+            width = pictureHeight * image.getWidth() / image.getHeight();
+        }
+        pageHolder.setPreferredSize(new Dimension(width, pictureHeight));
         pack();
+        setMinimumSize(new Dimension(640, 420));
         setLocationRelativeTo(owner);
     }
 }

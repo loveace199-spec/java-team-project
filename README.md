@@ -85,8 +85,8 @@ src/
 │   │   ├── CardCatalog.java     카드 20종 정의
 │   │   ├── StageEnemy.java      단계별 적 이름·이미지
 │   │   └── SaveStore.java       사용자 폴더에 진행도·설정 저장 (화면과 아직 미연결)
-│   └── test/                    창 없이 실행하는 검사 12개 (main 실행 → PASS 출력)
-└── assets/                      이미지 PNG (배경, 적, 플레이어, 카드 그림, 상점, GAME OVER)
+│   └── test/                    검사 13개 (main 실행 → PASS 출력)
+└── assets/                      이미지 PNG (배경, 적, 플레이어, 카드 그림, 상점, GAME OVER, 게임 설명)
 ```
 
 ### 호출 방향 (꼭 지키기)
