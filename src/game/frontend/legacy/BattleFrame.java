@@ -1,6 +1,5 @@
 package game.frontend.legacy;
 
-import game.backend.battle.Battle;
 import game.frontend.battle.BattlePreviewFrame;
 import game.frontend.battle.HandPanel;
 import game.frontend.common.Theme;
@@ -8,10 +7,11 @@ import game.frontend.common.Theme;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import game.backend.battle.DemoBattle;
 
 /** 이전 전투 시안(보존용). 현재 전투는 BattlePreviewFrame/BattleScreenPanel을 수정하세요. */
 public final class BattleFrame extends JFrame {
-    private final Battle battle = new Battle();
+    private final DemoBattle battle = new DemoBattle();
     private final JLabel heading = label("", 19);
     private final JLabel enemy = label("", 18);
     private final JLabel player = label("", 17);
@@ -71,9 +71,9 @@ public final class BattleFrame extends JFrame {
 
     private void refresh() {
         heading.setText("1층 · 전투 시제품     /     턴 " + battle.turn());
-        enemy.setText("탑의 파수꾼    체력 " + battle.enemyHp() + "/" + Battle.ENEMY_MAX_HP
+        enemy.setText("탑의 파수꾼    체력 " + battle.enemyHp() + "/" + DemoBattle.ENEMY_MAX_HP
             + (battle.isOver() ? "    · 전투 종료" : "    |    다음 행동: 공격 " + battle.enemyIntent()));
-        player.setText("플레이어   체력 " + battle.playerHp() + "/" + Battle.PLAYER_MAX_HP
+        player.setText("플레이어   체력 " + battle.playerHp() + "/" + DemoBattle.PLAYER_MAX_HP
             + "      방어도 " + battle.block() + "      에너지 " + battle.energy() + "/3"
             + "      다음 공격 추가 피해 +" + battle.bonus());
         hand.showCards(battle.hand(), battle.energy(), battle.isOver(), index -> {

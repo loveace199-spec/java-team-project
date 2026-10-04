@@ -1,12 +1,11 @@
 package game.test;
 
+import java.awt.*;
+import javax.swing.*;
 import game.backend.model.StageProgress;
 import game.frontend.battle.BattleScreenPanel;
 
-import java.awt.*;
-import javax.swing.*;
-
-/** 단계 순서와 실제 카드 클릭 후 승리 보고를 함께 검사합니다. */
+/** 단계 순서와 엔진의 승리 상태가 UI에서 한 번만 보고되는지 검사합니다. 카드 클릭은 DefenseUiCheck에서 검사합니다. */
 public final class StageProgressCheck {
     private static void check(boolean value) { if(!value) throw new AssertionError(); }
     public static void main(String[] args) throws Exception {
@@ -18,11 +17,12 @@ public final class StageProgressCheck {
             int[] wins={0};
             BattleScreenPanel panel=new BattleScreenPanel(()->{},1,()->{wins[0]++;progress.complete(1);});
             check(wins[0]==0);
-            for(int turn=0;turn<3;turn++) {
-                click(panel,"강타",true);
-                click(panel,"베기",true);
-                if(turn<2) click(panel,"턴 종료",false);
-            }
+            try {
+                Object engine=BattleTestAccess.field(panel,"battle");
+                ((game.backend.model.Enemy)BattleTestAccess.field(engine,"enemy")).takeDamage(35);
+                var refresh=panel.getClass().getDeclaredMethod("refresh");refresh.setAccessible(true);
+                refresh.invoke(panel);refresh.invoke(panel);
+            } catch(Exception e) {throw new RuntimeException(e);}
             check(wins[0]==1 && progress.isCleared(1) && progress.canEnter(2) && !progress.canEnter(3));
         });
         progress.complete(1);

@@ -1,16 +1,18 @@
 package game.frontend.battle;
 
-import game.backend.model.Card;
 import game.frontend.common.Theme;
 
 import java.awt.*;
 import javax.swing.JButton;
+import game.backend.model.Card;
 
 /** 카드 한 장의 외형만 담당합니다. 효과 계산은 하지 않습니다. */
 public final class CardView extends JButton {
     // JButton을 상속하므로 카드 전체가 클릭 가능한 버튼입니다.
     // 이 클래스는 외형만 담당하며, 카드 효과는 onUse로 외부에 전달합니다.
     private final Card card;
+    private boolean fillSlot;
+    public void setFillSlot(boolean fillSlot) { this.fillSlot=fillSlot; }
 
     public CardView(Card card, Runnable onUse) {
         this.card = card;
@@ -28,6 +30,13 @@ public final class CardView extends JButton {
         // [카드 디자인 수정] 아래 코드는 카드 테두리 → 비용/이름 → 아이콘 → 설명 순서입니다.
         super.paintComponent(graphics);
         Graphics2D g = (Graphics2D) graphics.create();
+        if(!isEnabled()) g.setComposite(AlphaComposite.SrcOver.derive(0.42f));
+        if(CardArtwork.paint(g,card,getWidth(),getHeight(),fillSlot)) {
+            if(isFocusOwner() || getModel().isRollover()) {
+                g.setColor(Theme.GOLD); g.drawRect(1,1,getWidth()-3,getHeight()-3);
+            }
+            g.dispose(); return;
+        }
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         // 기준 도화지는 180×246입니다. 실제 카드 크기가 달라도 비례해서 그립니다.
         g.scale(getWidth() / 180.0, getHeight() / 246.0);

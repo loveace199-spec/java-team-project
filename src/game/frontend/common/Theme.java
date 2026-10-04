@@ -1,9 +1,8 @@
 package game.frontend.common;
 
-import game.backend.model.CardType;
-
 import java.awt.Color;
 import java.awt.Font;
+import game.backend.model.CardType;
 
 /** 화면 전체 색상과 글꼴을 수정하는 곳입니다. */
 public final class Theme {

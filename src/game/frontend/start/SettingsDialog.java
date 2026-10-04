@@ -1,11 +1,11 @@
 package game.frontend.start;
 
 import game.frontend.common.StartComponents;
-import game.frontend.common.Theme;
 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import game.frontend.common.Theme;
 
 /** 설정은 현재 실행 중에만 적용. 오디오는 미구현 상태입니다. */
 public final class SettingsDialog extends JDialog {

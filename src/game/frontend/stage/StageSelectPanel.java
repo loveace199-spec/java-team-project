@@ -1,8 +1,6 @@
 package game.frontend.stage;
 
-import game.backend.model.StageProgress;
 import game.frontend.common.StartComponents;
-import game.frontend.common.Theme;
 import game.frontend.start.FantasyMenuButton;
 
 import java.awt.*;
@@ -10,12 +8,15 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import game.frontend.common.Theme;
+import game.backend.model.StageProgress;
 import java.util.function.IntConsumer;
 
 /** 5단계 경로 표시와 전투 시안 열기. 실제 단계 입장·상점·해금 규칙은 없습니다. */
 public final class StageSelectPanel extends JPanel {
     private final BufferedImage background;
     private final FantasyMenuButton back;
+    private final FantasyMenuButton editDeck;
     private final StageProgress progress;
     private final StageNodeButton[] nodes = new StageNodeButton[StageProgress.COUNT];
 
@@ -24,6 +25,9 @@ public final class StageSelectPanel extends JPanel {
     }
 
     public StageSelectPanel(Runnable onBack, StageProgress progress, IntConsumer onEnter) {
+        this(onBack,progress,onEnter,()->{});
+    }
+    public StageSelectPanel(Runnable onBack, StageProgress progress, IntConsumer onEnter, Runnable onDeck) {
         this.progress = progress;
         setLayout(null);
         try (var stream = getClass().getResourceAsStream("/assets/tower-menu-v1.png")) {
@@ -33,6 +37,8 @@ public final class StageSelectPanel extends JPanel {
         } catch (IOException e) { throw new IllegalStateException("배경 로드 실패", e); }
         back = new FantasyMenuButton("← 시작 화면", onBack);
         add(back);
+        editDeck=new FantasyMenuButton("내 덱 편집 · 20장",onDeck);
+        add(editDeck);
         for (int i=0;i<nodes.length;i++) {
             final int stage=i+1;
             nodes[i]=new StageNodeButton(stage,progress,()->onEnter.accept(stage));
@@ -47,6 +53,7 @@ public final class StageSelectPanel extends JPanel {
 
     @Override public void doLayout() {
         back.setBounds(30, 24, 180, 46);
+        editDeck.setBounds(getWidth()-250,24,220,46);
         for(int i=0;i<nodes.length;i++) nodes[i].setBounds(
             (int)(getWidth()*(.14+i*.18))-70, (int)(getHeight()*(.64-i*.065))-57,140,155);
     }
@@ -88,7 +95,7 @@ public final class StageSelectPanel extends JPanel {
         // 단계 원과 잠금 그림은 각각 StageNodeButton에서 그립니다.
         g.setFont(Theme.font(Font.PLAIN, 13));
         centered(g, progress.clearedCount()==5 ? "모든 단계를 클리어했습니다!" :
-            "금색: 입장 가능  ·  초록색: 클리어  ·  사슬 X: 잠김", w / 2, h - 54, Theme.MUTED);
+            "금색: 입장 가능  ·  초록색: 클리어  ·  X: 잠김", w / 2, h - 54, Theme.MUTED);
         centered(g, "Esc  시작 화면으로 돌아가기", w / 2, h - 29, Theme.MUTED);
         g.dispose();
     }

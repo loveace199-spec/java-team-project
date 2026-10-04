@@ -1,17 +1,17 @@
 package game.test;
 
-import game.frontend.battle.BattleScreenPanel;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import game.frontend.battle.BattleScreenPanel;
 
 public final class BattleScreenCheck {
     public static void main(String[] args) throws Exception {
         SwingUtilities.invokeAndWait(() -> {
-            BattleScreenPanel panel = new BattleScreenPanel(() -> { });
+            int stage = args.length > 1 ? Integer.parseInt(args[1]) : 1;
+            BattleScreenPanel panel = new BattleScreenPanel(() -> { }, stage, () -> { });
             panel.setSize(1180, 760);
             layout(panel);
             BufferedImage image = new BufferedImage(1180,760,BufferedImage.TYPE_INT_RGB);

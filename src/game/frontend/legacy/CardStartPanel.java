@@ -1,13 +1,13 @@
 package game.frontend.legacy;
 
-import game.backend.battle.Battle;
-import game.frontend.battle.CardView;
 import game.frontend.common.StartComponents;
-import game.frontend.common.Theme;
 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import game.database.CardCatalog;
+import game.frontend.battle.CardView;
+import game.frontend.common.Theme;
 
 /** 이전 시안 2(보존용). 현재 시작 화면에서 사용하지 않으며 비교 렌더링 테스트에 사용합니다. */
 public final class CardStartPanel extends JPanel {
@@ -26,7 +26,7 @@ public final class CardStartPanel extends JPanel {
         gallery.setOpaque(false);
         GridBagConstraints cell = new GridBagConstraints();
         cell.insets = new Insets(0, 10, 0, 10);
-        var cards = new Battle().hand();
+        var cards = CardCatalog.sampleHand();
         for (int i = 0; i < 4; i++) {
             var card = cards.get(i);
             CardView view = new CardView(card, () -> JOptionPane.showMessageDialog(this,

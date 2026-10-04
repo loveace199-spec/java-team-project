@@ -1,4 +1,4 @@
-> **경로 안내:** 이 문서는 시제품 당시의 설명입니다. 코드는 `src/game/` 아래 frontend / backend / database 로 옮겨졌고, `DemoBattle` 은 `Battle` 로, 카드 수치는 `src/data/cards.csv` 로 바뀌었습니다. 최신 구조는 저장소 루트 `README.md` 의 "코드 구조"를 보세요.
+> **경로 안내:** 이 문서는 시제품 당시의 설명입니다. 코드는 `src/game/` 아래 frontend / backend / database 로 옮겨졌고, 카드 정의는 `src/game/database/CardCatalog.java` 에 있습니다. 최신 구조는 저장소 루트 `README.md` 의 "코드 구조"를 보세요.
 
 # Swing 화면·카드 제작 시제품
 
@@ -80,7 +80,7 @@ Java 환경 오류가 나오면 Eclipse의 `Preferences > Java > Installed JREs`
 | 손패 나열과 클릭 연결 | `src/game/frontend/battle/HandPanel.java` |
 | 전장 배경과 적 그림 | `src/game/frontend/legacy/BattlefieldPanel.java` |
 | 공통 색상·폰트 | `src/game/frontend/common/Theme.java` |
-| 예시 카드 이름·비용·수치·설명 | `src/data/cards.csv` |
+| 예시 카드 이름·비용·수치·설명 | `src/game/database/CardCatalog.java` |
 | 카드 데이터 구조·분류 | `src/game/backend/model/Card.java`, `CardType.java` |
 | 임시 전투 처리 (백엔드 교체 대상) | `src/game/backend/battle/Battle.java` |
 | 실행 시작점 | `src/game/App.java` |

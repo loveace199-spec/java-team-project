@@ -1,11 +1,11 @@
 package game.frontend.legacy;
 
 import game.frontend.common.StartComponents;
-import game.frontend.common.Theme;
 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import game.frontend.common.Theme;
 
 /** 이전 시안 1(보존용). 현재 시작 화면은 FantasyStartPanel을 수정하세요. */
 public final class TowerStartPanel extends JPanel {
