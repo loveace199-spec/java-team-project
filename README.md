@@ -1,134 +1,102 @@
-# 2D rpg 카드 게임(자바 프로젝트)
+# Swing 화면·카드 제작 시제품
 
-> Java·Swing은 확정 사항이며, 나머지 도구와 버전은 팀 협의 후 확정한다.
+Java, Swing만 사용합니다. 외부 라이브러리와 서버는 필요하지 않습니다.
+그림판과 몬스터 카드 배치는 제외했습니다. 적은 카드가 아닌 임시 실루엣으로 표시합니다.
 
-## 개발 환경
+## Eclipse에서 실행
 
-```text
-Java 21 LTS — 추천
-= 게임 로직 구현 / 객체지향 설계
-= 모든 팀원이 동일한 JDK 버전 사용
+1. `File > Import > General > Existing Projects into Workspace`를 선택합니다.
+2. `Select root directory`에서 이 `swing-prototype` 폴더를 선택합니다.
+3. `CardBattlePrototype`을 체크하고 `Finish`를 누릅니다.
+4. `src/prototype/App.java`를 우클릭해 `Run As > Java Application`을 선택합니다.
 
-Java Swing — 확정
-= 데스크톱 게임 화면 / 카드 UI / 버튼 / 화면 전환
+Java 환경 오류가 나오면 Eclipse의 `Preferences > Java > Installed JREs`에서 JDK 21을 등록하고,
+프로젝트 `Properties > Java Build Path > Libraries`의 JRE System Library를 JavaSE-21로 지정하세요.
 
-Maven + Maven Wrapper — 추천
-= 프로젝트 빌드 / 의존성 관리 / 테스트 실행
-= 팀원 간 빌드 환경 통일
+## 수정할 파일
 
-IntelliJ IDEA 또는 Eclipse
-= 코드 작성 / 디버깅 / 실행
-= IDE는 자유롭게 선택하되 JDK와 빌드 방식은 통일
-```
+### 시작 화면 3가지
 
-## 게임 구현
+현재 `App.java`는 **안개 낀 탑 배경 시작 화면**을 엽니다. 이전 세 시안 클래스는 보존했습니다.
+게임 이름은 미정이며 `FantasyStartPanel.GAME_TITLE`에서 제목을 수정합니다.
 
-```text
-Swing JPanel + CardLayout
-= 시작 / 경로 선택 / 전투 / 보상 / 상점 / 휴식 화면 구성
-= 화면 간 이동 관리
+- `ui/start/TowerStartPanel.java`: 어두운 탑 실루엣, 좌측 메뉴, 금색 강조.
+- `ui/start/CardStartPanel.java`: 공격·방어·회복·주문 카드 4장 중심. 클릭하면 설명 표시.
+- `ui/start/MinimalStartPanel.java`: 밝고 간결한 메뉴와 플레이 순서 안내.
+- `ui/start/StartFrame.java`: 시작 화면과 전투 연결.
+- `ui/start/FantasyStartPanel.java`: 탑 배경, 임시 로고와 메뉴 배치.
+- `ui/start/FantasyMenuButton.java`: 메뉴 디자인과 선택 효과.
+- `ui/start/SettingsDialog.java`: 창 크기 설정과 조작 안내.
+- `src/assets/tower-menu-v1.png`: 배경 이미지. Eclipse가 빌드 출력으로 복사합니다.
+- `ui/start/StartComponents.java`: 공통 버튼과 텍스트 스타일.
 
-Java2D
-= 캐릭터 / 적 / 카드 이미지 / 체력바 그리기
+게임 시작/게임 설명/설정/게임 종료가 동작합니다.
+게임 시작은 동일한 탑 배경의 1~5단계 안내 화면으로 연결됩니다.
+`ui/start/StageSelectPanel.java`에서 단계 배치를 수정합니다.
+처음에는 1단계만 금색으로 열립니다. 클리어한 단계는 초록색, 잠긴 단계는 사슬 X로 표시됩니다.
+열린 단계 버튼을 눌러 전투에 입장하며, 승리해야 다음 단계가 열립니다.
+패배하거나 중간에 돌아오면 다음 단계는 열리지 않습니다. 클리어한 단계는 재도전 가능합니다.
+진행도는 실행 중에만 유지되며 프로그램 종료 후 저장되지 않습니다. 상점은 아직 없습니다.
+시작 화면 버튼 또는 Esc로 돌아옵니다.
+기존 전투 코드는 보존하되 시작 메뉴와의 직접 연결은 해제했습니다.
 
-Swing Timer
-= 짧은 애니메이션 / 피해 표시 / 화면 효과
-= 화면을 멈추는 대기 처리 방지
+### 위아래 대치형 전투 화면
 
-Java Collections
-= 보유 덱 / 뽑기 더미 / 손패 / 버린 카드 더미 관리
+게임 시작 → 금색 또는 초록색 **단계 버튼**으로 실행합니다.
+시작·스테이지·전투는 같은 창 안에서 전환됩니다. 현재 다섯 단계의 전투 내용은 같은 임시 규칙입니다.
+전투의 '← 스테이지' 버튼으로 돌아오며, 다시 체험에 들어가면 새 전투로 시작합니다.
+창 위치와 크기는 화면을 전환해도 유지됩니다. 설명·설정만 기존 보조 창을 사용합니다.
+`prototype.ui.BattlePreviewFrame`을 직접 Java Application으로 실행해도 됩니다.
 
-java.util.Random
-= 덱 셔플 / 적 선택 / 카드 보상 추첨
-= 테스트에서는 고정된 시드로 결과 재현
-```
+- `BattleScreenPanel.java`: 화면 배치와 카드/턴 버튼 연결.
+- `BattleBoardPanel.java`: 12시 상대, 6시 플레이어, 체력·에너지 표시. 배경과 초상화는 임시 도형.
+- `BattlePreviewFrame.java`: 시안 창 및 단독 실행 진입점.
+- `CardView.java`: 기존 카드 디자인 재사용. 몬스터 배치/소환 규칙은 추가하지 않았습니다.
+- `model/StageProgress.java`: 순차 클리어와 해금 상태.
+- `ui/start/StageNodeButton.java`: 금색/초록색/사슬 X 표시와 입장 버튼.
 
-## 데이터와 저장
+### 상대 스켈레톤 이미지
 
-```text
-JSON + Gson — 추천
-= 카드 20종 / 일반 적 5종 / 보스 1종의 정의 데이터 관리
-= 코드 수정 없이 비용과 효과 수치 조정
+`src/assets/skeleton-soldier-v1.png`를 현재 전투의 상대 초상화로 사용합니다.
+이름은 스켈레톤 병사이며 기존 체력·공격 규칙은 변경하지 않았습니다.
+내장 이미지 생성 도구로 제작한 투명 배경 PNG입니다.
+프롬프트: “정면 상반신 스켈레톤 병사, 낡은 철 갑옷과 검, 푸른 눈빛,
+어두운 판타지 2D 잉크풍, 작은 크기에서도 읽히는 실루엣, 투명 배경, 글자 없음.”
+- 기존 `BattleFrame.java`는 이전 시안으로 보존합니다.
+게임 설명 내용은 `ui/start/GameGuideDialog.java`에서 수정합니다.
+설정은 실행 중 시작 창 크기에만 적용되며 저장하지 않습니다. 오디오가 없어 음량은 비활성입니다.
+키 재지정은 미구현이며 조작 안내만 제공합니다. 메뉴는 ↑↓/Tab 이동, Enter/Space 선택이 가능합니다.
 
-로컬 JSON 파일
-= 발견한 기억 도감 / 음량 등 사용자 설정 저장
-= 첫 버전은 도전 도중 저장·이어하기 제외
+배경 제작: 내장 이미지 생성 도구 사용. 프롬프트 요약:
+“청회색 안개와 잉크풍 폐허, 우측의 거대한 탑, 중앙에 제목·메뉴용 여백.
+나무·캐릭터·문구·로고·버튼 없이 배경만 생성.”
 
-리소스 파일
-= 이미지 PNG / 효과음 WAV / 데이터 JSON
-= src/main/resources 아래에서 관리
+| 작업 | 파일 |
+| --- | --- |
+| 전체 화면 배치 | `src/prototype/ui/BattleFrame.java` |
+| 카드 크기·테두리·아이콘·텍스트 배치 | `src/prototype/ui/CardView.java` |
+| 손패 나열과 클릭 연결 | `src/prototype/ui/HandPanel.java` |
+| 전장 배경과 적 그림 | `src/prototype/ui/BattlefieldPanel.java` |
+| 공통 색상·폰트 | `src/prototype/ui/Theme.java` |
+| 예시 카드 이름·비용·수치·설명 | `src/prototype/data/CardCatalog.java` |
+| 카드 데이터 구조·분류 | `src/prototype/model/Card.java`, `CardType.java` |
+| 임시 전투 처리 (백엔드 교체 대상) | `src/prototype/demo/DemoBattle.java` |
+| 실행 시작점 | `src/prototype/App.java` |
 
-저장 경로
-= 게임 실행 파일과 분리된 사용자 전용 폴더
-= 소스 코드와 Git 저장소에 개인 저장 데이터 포함 금지
-```
+카드 설명과 power 수치는 서로 자동 생성되지 않으므로 함께 수정하세요.
+주문은 현재 '다음 공격 피해 증가'만 지원합니다. 새 효과는 백엔드 담당자와 협의해 추가하세요.
 
-## 코드 구조
+## 임시 동작
 
-```text
-model
-= 플레이어 / 적 / 카드 / 덱 / 도전 상태
+- 카드 클릭 시 즉시 효과 적용, 에너지 부족 시 사용 불가.
+- 카드는 공격, 회복을 둘 중 하나만 사용하도록 제작/ 상대방 공격 시 방어 카드가 있을 때 방어 가능
+- 턴 종료 시 적 공격을 방어도로 먼저 막고, 다음 턴에 방어도와 공격 보너스를 초기화.
+- 다음 턴에는 에너지와 고정 손패가 다시 채워짐. 실제 덱/버린 카드/무작위 뽑기는 미구현.
+- 체력 0이면 전투 종료, '처음부터'로 재시작.
+- 층 이동, 카드 보상·강화, 저장, 정식 이미지와 애니메이션은 미구현.
+- 모든 수치와 동작은 화면 확인용이며 최종 게임 규칙이 아닙니다.
 
-game
-= 턴 진행 / 카드 효과 / 피해 계산 / 승패 판정 / 층 진행
+## 테스트
 
-ui
-= Swing 화면 / 사용자 입력 / 상태 표시
-
-data
-= 카드·적 정의 데이터 불러오기 / 데이터 검증
-
-save
-= 기억 도감과 설정 저장 / 불러오기
-```
-
-게임 규칙은 Swing 화면과 분리한다. 화면은 사용자의 행동을 게임 로직에 전달하고, 처리된 결과를 표시한다. 카드 정의 데이터와 실제 보유 카드의 강화 상태도 별도로 관리한다.
-
-## 테스트와 협업
-
-```text
-JUnit 5 — 추천
-= 피해·방어 계산 / 에너지 소비 / 덱 순환 / 승패 판정 테스트
-
-Git + GitHub
-= 코드 이력 / 작업 브랜치 / Pull Request / 코드 리뷰
-
-GitHub Issues — 추천
-= 담당자 / 작업 내용 / 완료 조건 / 버그 관리
-
-GitHub Actions — 도입 예정
-= PR 제출 시 Maven 빌드와 자동 테스트 실행
-= JDK와 빌드 설정 확정 후 구성
-
-docs/ + ADR — 추천
-= 게임 규칙 / 데이터 명세 / 구조 설계 / 주요 결정 근거 기록
-= ADR은 중요한 기술 선택과 변경 이유를 남기는 문서
-
-팀원 리뷰
-= 다른 팀원 1명 이상 검토
-= 요구사항 충족과 실제 실행 여부 확인 후 병합
-```
-
-## 실행과 배포
-
-```text
-개발 중 실행
-= IDE에서 Main 클래스 실행
-
-배포 파일
-= 의존성과 리소스를 포함한 실행 가능한 JAR
-= Java 21 실행 환경에서 java -jar 명령으로 실행
-
-Windows 배포 — 여유가 있을 때
-= jpackage로 실행 환경을 포함한 배포본 제작
-= 첫 버전은 JAR 실행 검증을 우선
-```
-
-## 공통 개발 원칙
-
-- Swing 화면 변경은 이벤트 처리 스레드(EDT)에서 수행한다.
-- 파일 읽기·저장 등 오래 걸리는 작업은 화면 처리와 분리한다.
-- 이미지와 데이터는 상대적인 리소스 경로로 불러온다. 개인 PC의 절대 경로를 코드에 넣지 않는다.
-- 파일 인코딩은 UTF-8로 통일한다.
-- 저장 파일이 없으면 새로 생성하고, 손상된 파일은 원본을 보존한 뒤 복구 안내를 표시한다.
-- 첫 버전은 서버·로그인·외부 데이터베이스 없이 로컬 싱글플레이로 구현한다.
+`src/prototype/test/PrototypeCheck.java`를 Java Application으로 실행하면 임시 로직과
+화면 컴포넌트 생성 검사를 수행합니다. 창을 띄우지 않는 테스트입니다.
