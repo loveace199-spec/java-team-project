@@ -34,6 +34,8 @@ public final class BattleScreenPanel extends JPanel {
     private final JButton endTurn = button("턴 종료", this::finishPlayerTurn);
     private final JPanel battleMenu=new JPanel(new GridLayout(2,1,0,5));
     private final JButton gearButton=new BattleMenuButton("",true,()->battleMenu.setVisible(!battleMenu.isVisible()));
+    // 패배 시 덮는 GAME OVER 화면 (재도전 / 메인으로)
+    private final GameOverPanel gameOver;
 
     public BattleScreenPanel(Runnable back) {
         this(back, 1, () -> { });
@@ -43,24 +45,23 @@ public final class BattleScreenPanel extends JPanel {
         this(back,stage,onVictory,game.database.CardCatalog.allCards());
     }
     public BattleScreenPanel(Runnable back, int stage, Runnable onVictory, java.util.List<game.backend.model.Card> deck) {
+        this(back,stage,onVictory,deck,new game.backend.model.RunUpgrades());
+    }
+    /** upgrades: 상점에서 산 강화. 전투가 바뀌어도 같은 객체를 넘겨 효과를 유지합니다. */
+    public BattleScreenPanel(Runnable back, int stage, Runnable onVictory, java.util.List<game.backend.model.Card> deck, game.backend.model.RunUpgrades upgrades) {
         // 전투 배경 위에 카드와 버튼을 겹쳐 놓기 위해 JLayeredPane을 사용합니다.
         super(new BorderLayout());
         this.stage = stage;
-        battle=new DemoBattle(deck);
+        battle=new DemoBattle(deck, upgrades);
         battle.enableReactions();
         board = new BattleBoardPanel(battle, stage);
         this.onVictory = onVictory;
         setBackground(Theme.BACKGROUND);
-        JButton backButton = button("메인으로 가기", ()->{battleMenu.setVisible(false);countdownTimer.stop();phaseTimer.stop();effects.cancel();back.run();});
-        JButton restartButton = button("재시작", () -> {
-            battleMenu.setVisible(false);
-            effects.cancel();recentActions.clear();history.setText("");
-            battle.reset();
-            clash.show(null,null,"공격 → 방어 → 피해 판정");
-            victoryReported = false;
-            message.setText("새 전투를 준비합니다.");
-            beginPlayerTurn();
-        });
+        Runnable goMain = ()->leaveToMain(back);
+        JButton backButton = button("메인으로 가기", goMain);
+        JButton restartButton = button("재시작", this::restartBattle);
+        gameOver = new GameOverPanel(this::restartBattle, goMain);
+        gameOver.setVisible(false);
         title.setHorizontalAlignment(SwingConstants.CENTER);
         turnBanner.setHorizontalAlignment(SwingConstants.CENTER);
         turnBanner.setOpaque(true);
@@ -103,6 +104,25 @@ public final class BattleScreenPanel extends JPanel {
         phaseTimer.stop();
         effects.cancel();
         super.removeNotify();
+    }
+
+    /** 전투를 멈추고 메인(시작) 화면으로 나갑니다. (전투 메뉴의 메인으로 가기, GAME OVER 의 메인으로) */
+    private void leaveToMain(Runnable back) {
+        battleMenu.setVisible(false);gameOver.setVisible(false);
+        countdownTimer.stop();phaseTimer.stop();effects.cancel();
+        back.run();
+    }
+
+    /** 같은 단계를 처음부터 다시 시작합니다. (전투 메뉴의 재시작, GAME OVER 의 재도전) */
+    private void restartBattle() {
+        battleMenu.setVisible(false);
+        gameOver.setVisible(false);
+        effects.cancel();recentActions.clear();history.setText("");
+        battle.reset();
+        clash.show(null,null,"공격 → 방어 → 피해 판정");
+        victoryReported = false;
+        message.setText("새 전투를 준비합니다.");
+        beginPlayerTurn();
     }
 
     private void beginPlayerTurn() {
@@ -186,6 +206,12 @@ public final class BattleScreenPanel extends JPanel {
         turnBanner.setText(victory ? "VICTORY" : "DEFEAT");
         turnBanner.setForeground(victory ? new Color(120, 220, 145) : new Color(235, 126, 108));
         turnBanner.setVisible(true);
+        if (!victory) {
+            // 패배: GAME OVER 화면을 덮고 '재도전' 버튼에 포커스를 둡니다.
+            battleMenu.setVisible(false);
+            gameOver.setVisible(true);
+            gameOver.focusRetry();
+        }
         refresh();
     }
 
@@ -206,6 +232,7 @@ public final class BattleScreenPanel extends JPanel {
             add(effects,JLayeredPane.DRAG_LAYER);
             add(clash,JLayeredPane.PALETTE_LAYER);
             add(skipDefense,JLayeredPane.MODAL_LAYER);
+            add(gameOver,Integer.valueOf(JLayeredPane.DRAG_LAYER+10));
         }
 
         @Override public void doLayout() {
@@ -213,6 +240,7 @@ public final class BattleScreenPanel extends JPanel {
             int h = getHeight();
             board.setBounds(0, 0, w, h);
             effects.setBounds(0,0,w,h);
+            gameOver.setBounds(0,0,w,h);
             clash.setBounds((int)(w*.30),(int)(h*.34),(int)(w*.38),(int)(h*.32));
             skipDefense.setBounds(w-(int)(w*.175)-24,(int)(h*.49),(int)(w*.175),42);
             history.setBounds(18,(int)(h*.63),Math.min(275,w/4),(int)(h*.25));
@@ -252,6 +280,11 @@ public final class BattleScreenPanel extends JPanel {
             onVictory.run();
             message.setText(stage + "단계 클리어! 톱니바퀴 메뉴에서 메인으로 돌아가세요.");
             finishBattle(true);
+            return;
+        }
+        // 내 공격의 반격 피해 등으로 체력이 0이 되면 패배 처리합니다.
+        if (battle.playerHp() == 0 && turnPhase != TurnPhase.OVER && !effects.isPlaying()) {
+            finishBattle(false);
             return;
         }
         title.setText(stage + "단계 · 턴 " + battle.turn()+" · 뽑기 "+battle.drawCount()+" · 버림 "+battle.discardCount());

@@ -72,21 +72,21 @@ src/
 ├── game/
 │   ├── App.java                 실행 시작점 (Eclipse: Run As > Java Application)
 │   ├── frontend/                🖥️ Swing 화면 — 입력을 받고 결과를 그린다
-│   │   ├── common/              공통 색상·글꼴(Theme), 공통 버튼(StartComponents)
+│   │   ├── common/              공통 색상·글꼴(Theme), 공통 버튼, 그림 위 클릭 영역(ImageHotspotButton), 이미지 로더
 │   │   ├── start/               시작 화면, 메인 창(StartFrame), 게임 설명·설정 창
-│   │   ├── stage/               1~5단계 선택 화면, 3단계 상점 안내
+│   │   ├── stage/               1~5단계 선택 화면, 3단계 상점(ShopPanel · 카드 3장 버튼)
 │   │   ├── deck/                내 덱 편집 (20장, 같은 카드 최대 2장)
-│   │   ├── battle/              전투 화면·턴 타이머·공격/방어 대결(Clash)·효과 애니메이션·카드 그림
+│   │   ├── battle/              전투 화면·턴 타이머·공격/방어 대결(Clash)·효과 애니메이션·카드 그림·GAME OVER 화면
 │   │   └── legacy/              이전 시안 보존용 (게임 흐름에서 사용 안 함)
 │   ├── backend/                 ⚙️ 게임 규칙 — Swing 을 모른다
-│   │   ├── model/               카드, 카드 종류, 플레이어, 적, 내 덱(PlayerDeck), 단계 진행도
+│   │   ├── model/               카드, 카드 종류, 플레이어, 적, 내 덱(PlayerDeck), 단계 진행도, 상점 강화(ShopItem·RunUpgrades)
 │   │   └── battle/              전투 규칙(Battle) + 화면용 연결 클래스(DemoBattle)
 │   ├── database/                🗄️ 데이터 — DB 서버 없이 코드·로컬 파일
 │   │   ├── CardCatalog.java     카드 20종 정의
 │   │   ├── StageEnemy.java      단계별 적 이름·이미지
 │   │   └── SaveStore.java       사용자 폴더에 진행도·설정 저장 (화면과 아직 미연결)
-│   └── test/                    창 없이 실행하는 검사 11개 (main 실행 → PASS 출력)
-└── assets/                      이미지 PNG (배경, 적, 카드 그림)
+│   └── test/                    창 없이 실행하는 검사 12개 (main 실행 → PASS 출력)
+└── assets/                      이미지 PNG (배경, 적, 플레이어, 카드 그림, 상점, GAME OVER)
 ```
 
 ### 호출 방향 (꼭 지키기)

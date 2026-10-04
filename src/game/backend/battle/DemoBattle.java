@@ -10,6 +10,8 @@ public final class DemoBattle {
     private final Battle battle;
     public DemoBattle() { battle=new Battle(); }
     public DemoBattle(List<Card> cards) { battle=new Battle(cards); }
+    public DemoBattle(List<Card> cards, game.backend.model.RunUpgrades upgrades) { battle=new Battle(cards, upgrades); }
+    public int playerMaxHp() { return battle.playerMaxHp(); }
     public void reset() { battle.reset(); }
     public void enableReactions() { battle.enableReactions(); }
     public boolean canPlay(int index) { return battle.canPlay(index); }

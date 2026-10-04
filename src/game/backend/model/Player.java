@@ -20,6 +20,7 @@ public final class Player {
     /** 턴마다 회복되는 기본 에너지 */
     public static final int MAX_ENERGY = 3;
 
+    private int maxHp = MAX_HP;
     private int hp;
     private int energy;
     private int block;
@@ -31,10 +32,21 @@ public final class Player {
 
     /** 플레이어를 전투 시작 상태로 되돌립니다. */
     public void reset() {
-        hp = MAX_HP;
+        hp = maxHp;
         energy = MAX_ENERGY;
         block = 0;
         bonusDamage = 0;
+    }
+
+    /** 이번 전투의 최대 체력 (기본 40 + 상점 강화). */
+    public int maxHp() {
+        return maxHp;
+    }
+
+    /** 최대 체력을 바꿉니다. 다음 reset() 부터 이 값으로 시작합니다. */
+    public void setMaxHp(int maxHp) {
+        if (maxHp <= 0) throw new IllegalArgumentException("최대 체력은 1 이상이어야 합니다.");
+        this.maxHp = maxHp;
     }
 
     public int hp() {
@@ -95,7 +107,7 @@ public final class Player {
     public int heal(int amount) {
         if (amount < 0) throw new IllegalArgumentException("회복량은 음수가 될 수 없습니다.");
         int before = hp;
-        hp = Math.min(MAX_HP, hp + amount);
+        hp = Math.min(maxHp, hp + amount);
         return hp - before;
     }
 

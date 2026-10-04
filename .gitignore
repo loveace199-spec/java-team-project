@@ -34,3 +34,12 @@ work/
 # 검사(test) 실행 시 프로젝트 루트에 생기는 미리보기 이미지
 /*.png
 /preview/
+
+# Eclipse 가 자동 생성하는 모듈 파일 (있으면 Swing 을 못 찾아 컴파일 실패)
+src/module-info.java
+
+# Eclipse 개인 설정 / 빌드 결과
+.project
+.classpath
+.settings/
+bin/
