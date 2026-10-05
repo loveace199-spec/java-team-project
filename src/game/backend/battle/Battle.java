@@ -23,7 +23,8 @@ public final class Battle {
     private final List<Card> draw = new ArrayList<>(), discard = new ArrayList<>();
     private final List<Card> enemyHand=new ArrayList<>(), enemyDraw=new ArrayList<>(), enemyDiscard=new ArrayList<>();
     private Card lastEnemyCard;
-    private boolean reactions, mainCardUsed, pendingEnemy;
+    private boolean reactions, attackUsed, healUsed, pendingEnemy;
+    private int spellUses;
     private Card pendingAttack;
     public void enableReactions() { reactions=true;reset(); }
     public Card pendingAttack() { return pendingAttack; }
@@ -45,7 +46,7 @@ public final class Battle {
         player.reset();
         enemy.reset();
         turn = 1;
-        pendingAttack=null;mainCardUsed=false;
+        pendingAttack=null;attackUsed=false;healUsed=false;spellUses=0;
         hand.clear(); draw.clear(); discard.clear(); poisons.clear();
         enemyHand.clear();enemyDraw.clear();enemyDiscard.clear();lastEnemyCard=null;
         // 상대 시제품 덱: 실제 공격 카드 5종을 4장씩 사용합니다. 덱 편집 규칙과는 별개입니다.
@@ -67,11 +68,24 @@ public final class Battle {
 
     public boolean canPlay(int index) {
         // 잘못된 카드 위치, 전투 종료, 에너지 부족일 때 사용을 막습니다.
-        if(isOver() || index<0 || index>=hand.size() || hand.get(index).cost()>player.energy()) return false;
-        if(!reactions) return true;
+        if(index<0 || index>=hand.size() || hand.get(index).cost()>player.energy()) return false;
         var type=hand.get(index).type();
-        if(pendingAttack!=null) return pendingEnemy && type==game.backend.model.CardType.DEFENSE;
-        return type!=game.backend.model.CardType.DEFENSE && (!mainCardUsed || type==game.backend.model.CardType.SPELL);
+
+        // 상대의 공격에 대응 중에는 방어 카드만 사용할 수 있으며,
+        // 방어 등급은 카드의 에너지 비용을 기준으로 공격 등급 이상이어야 합니다.
+        if(pendingAttack!=null) {
+            if(!pendingEnemy || type!=game.backend.model.CardType.DEFENSE) return false;
+            return hand.get(index).cost() >= pendingAttack.cost();
+        }
+
+        if(isOver()) return false;
+        if(!reactions) return true;
+
+        // 공격/회복은 각각 턴당 1장, 주문은 턴당 2장까지 사용할 수 있습니다.
+        if(type==game.backend.model.CardType.ATTACK) return !attackUsed;
+        if(type==game.backend.model.CardType.HEAL) return !healUsed;
+        if(type==game.backend.model.CardType.SPELL) return spellUses < 2;
+        return false;
     }
 
     public String play(int index) {
@@ -81,11 +95,12 @@ public final class Battle {
         player.spendEnergy(card.cost());
         discard.add(card);
         if(reactions && card.type()==game.backend.model.CardType.ATTACK) {
-            mainCardUsed=true;pendingAttack=card;pendingEnemy=false;
+            attackUsed=true;pendingAttack=card;pendingEnemy=false;
             return "공격 공개 · 상대 방어 대기";
         }
         if(reactions && card.type()==game.backend.model.CardType.DEFENSE) return resolveAttack(card);
-        if(reactions && card.type()==game.backend.model.CardType.HEAL) mainCardUsed=true;
+        if(reactions && card.type()==game.backend.model.CardType.HEAL) healUsed=true;
+        if(reactions && card.type()==game.backend.model.CardType.SPELL) spellUses++;
         var data=CardCatalog.effect(card);
         if(data!=null) {
             enemy.takeDamage(data.damage());
@@ -159,7 +174,8 @@ public final class Battle {
     }
     public Card chooseEnemyDefense() {
         if(pendingAttack==null || pendingEnemy) return null;
-        for(int i=0;i<enemyHand.size();i++) if(enemyHand.get(i).type()==game.backend.model.CardType.DEFENSE) {
+        for(int i=0;i<enemyHand.size();i++) if(enemyHand.get(i).type()==game.backend.model.CardType.DEFENSE
+                && enemyHand.get(i).cost() >= pendingAttack.cost()) {
             Card defense=enemyHand.remove(i);enemyDiscard.add(defense);return defense;
         }
         return null;
@@ -183,7 +199,7 @@ public final class Battle {
     }
     public void startNextRound() {
         if(isOver() || pendingAttack!=null) return;
-        turn++;player.refillEnergy();player.clearBlock();player.consumeBonusDamage();mainCardUsed=false;refill();
+        turn++;player.refillEnergy();player.clearBlock();player.consumeBonusDamage();attackUsed=false;healUsed=false;spellUses=0;refill();
     }
     public int enemyHp() { return enemy.hp(); }
     public int energy() { return player.energy(); }
@@ -196,9 +212,9 @@ public final class Battle {
     }
     public void prepareEnemyTurn() { if(!isOver()) fillEnemyHand(); }
     private void fillEnemyHand() {
-        while(enemyHand.size()<5) {
-            if(enemyDraw.isEmpty()) {enemyDraw.addAll(enemyDiscard);enemyDiscard.clear();java.util.Collections.shuffle(enemyDraw);}
-            if(enemyDraw.isEmpty()) break;
+        // 적 덱은 소진되면 다시 섞지 않습니다. 손패와 드로우 더미가 모두
+        // 비어 있으면 더 이상 적 카드를 만들지 않고 전투 승리 조건으로 처리합니다.
+        while(enemyHand.size()<5 && !enemyDraw.isEmpty()) {
             enemyHand.add(enemyDraw.remove(enemyDraw.size()-1));
         }
     }
@@ -206,7 +222,7 @@ public final class Battle {
     public int enemyDrawCount() {return enemyDraw.size();}
     public int enemyDiscardCount() {return enemyDiscard.size();}
     public Card lastEnemyCard() {return lastEnemyCard;}
-    public boolean isOver() { return player.hp() == 0 || enemy.isDefeated(); }
+    public boolean isOver() { return player.hp() == 0 || enemy.isDefeated() || (pendingAttack == null && enemyHand.isEmpty() && enemyDraw.isEmpty()); }
     public List<Card> hand() { return List.copyOf(hand); }
     public int drawCount() { return draw.size(); }
     public int discardCount() { return discard.size(); }
