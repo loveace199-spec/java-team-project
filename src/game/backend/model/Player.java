@@ -38,9 +38,11 @@ public final class Player {
         return maxHp;
     }
 
-    /** 최대 체력을 바꿉니다. 다음 reset() 부터 이 값으로 시작합니다. */
+    /** 최대 체력을 바꿉니다. 다음 reset()부터 이 값으로 시작합니다. */
     public void setMaxHp(int maxHp) {
-        if (maxHp <= 0) throw new IllegalArgumentException("최대 체력은 1 이상이어야 합니다.");
+        if (maxHp <= 0) {
+            throw new IllegalArgumentException("최대 체력은 1 이상이어야 합니다.");
+        }
         this.maxHp = maxHp;
     }
 
@@ -59,7 +61,9 @@ public final class Player {
 
     /** 방어도를 증가시킵니다. */
     public void addBlock(int amount) {
-        if (amount < 0) throw new IllegalArgumentException("방어도는 음수가 될 수 없습니다.");
+        if (amount < 0) {
+            throw new IllegalArgumentException("방어도는 음수가 될 수 없습니다.");
+        }
         block += amount;
     }
 
@@ -70,7 +74,9 @@ public final class Player {
 
     /** 다음 공격에 추가 피해를 부여합니다. */
     public void addBonusDamage(int amount) {
-        if (amount < 0) throw new IllegalArgumentException("추가 피해는 음수가 될 수 없습니다.");
+        if (amount < 0) {
+            throw new IllegalArgumentException("추가 피해는 음수가 될 수 없습니다.");
+        }
         bonusDamage += amount;
     }
 
@@ -83,7 +89,10 @@ public final class Player {
 
     /** HP를 회복합니다. 최대 HP를 넘지 않도록 제한합니다. */
     public int heal(int amount) {
-        if (amount < 0) throw new IllegalArgumentException("회복량은 음수가 될 수 없습니다.");
+        if (amount < 0) {
+            throw new IllegalArgumentException("회복량은 음수가 될 수 없습니다.");
+        }
+
         int before = hp;
         hp = Math.min(maxHp, hp + amount);
         return hp - before;
@@ -97,7 +106,9 @@ public final class Player {
      * @return 실제로 HP가 감소한 피해량
      */
     public int takeDamage(int incomingDamage) {
-        if (incomingDamage < 0) throw new IllegalArgumentException("피해량은 음수가 될 수 없습니다.");
+        if (incomingDamage < 0) {
+            throw new IllegalArgumentException("피해량은 음수가 될 수 없습니다.");
+        }
 
         int blocked = Math.min(block, incomingDamage);
         block -= blocked;
