@@ -2,7 +2,6 @@ package game.frontend.start;
 
 import game.frontend.stage.ShopPanel;
 import game.frontend.stage.StageSelectPanel;
-
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -12,77 +11,96 @@ import game.backend.model.StageProgress;
 
 /** 탑 테마 메인 화면. 기존 3개 시안 클래스는 보존합니다. */
 public final class StartFrame extends JFrame {
-    // JFrame = 실제 윈도우 창, JPanel = 창 안에 들어가는 화면 조각입니다.
     private final FantasyStartPanel menu;
-    private final CardLayout pages = new CardLayout();
-    // CardLayout은 여러 화면을 쌓아 놓고 이름으로 한 화면씩 보여주는 배치 방식입니다.
-    private final JPanel screens = new JPanel(pages);
-    // 전투도 같은 창의 화면 조각으로 관리합니다. 새 JFrame을 만들지 않습니다.
+    private final CardLayout pages=new CardLayout();
+    private final JPanel screens=new JPanel(pages);
     private BattleScreenPanel battleScreen;
-    private final StageProgress progress = new StageProgress();
+    private final StageProgress progress=new StageProgress();
     private final StageSelectPanel stageScreen;
-    // 상점 강화 상태. 이번 실행 동안 모든 전투에 적용됩니다.
-    private final game.backend.model.RunUpgrades upgrades = new game.backend.model.RunUpgrades();
+    private final game.backend.model.RunUpgrades upgrades=new game.backend.model.RunUpgrades();
     private final game.backend.model.PlayerDeck deck=new game.backend.model.PlayerDeck();
+
     public StartFrame() {
         super("게임 타이틀 (미정)");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(1000, 680));
-        setSize(1100, 730);
+        setMinimumSize(new Dimension(1000,680));
+        setSize(1100,730);
         setLocationRelativeTo(null);
-        // 버튼이 눌렸을 때 실행할 동작을 전달합니다. () -> ... 는 나중에 실행할 코드입니다.
-        // 순서: 게임 시작 / 게임 설명 / 설정 / 종료.
-        menu = new FantasyStartPanel(() -> pages.show(screens, "stages"),
-            () -> new GameGuideDialog(this).setVisible(true),
-            () -> new SettingsDialog(this).setVisible(true), () -> System.exit(0));
-        // "menu", "stages"는 화면을 찾는 이름입니다. 파일 이름과는 관계없습니다.
-        screens.add(menu, "menu");
+
+        menu=new FantasyStartPanel(()->pages.show(screens,"stages"),
+            ()->new GameGuideDialog(this).setVisible(true),
+            ()->new SettingsDialog(this).setVisible(true),
+            ()->System.exit(0));
+
+        screens.add(menu,"menu");
+
         var editor=new game.frontend.deck.DeckEditorPanel(deck,()->pages.show(screens,"stages"));
         screens.add(editor,"deck");
-        stageScreen = new StageSelectPanel(() -> {
-            pages.show(screens, "menu");
+
+        stageScreen=new StageSelectPanel(()->{
+            pages.show(screens,"menu");
             menu.focusStart();
-        }, progress, this::showBattlePreview,()->{editor.beginEditing();pages.show(screens,"deck");});
-        screens.add(stageScreen, "stages");
-        screens.add(new ShopPanel(upgrades, () -> pages.show(screens, "stages"), () -> {
+        },progress,this::showBattlePreview,()->{
+            editor.beginEditing();
+            pages.show(screens,"deck");
+        });
+
+        screens.add(stageScreen,"stages");
+
+        screens.add(new ShopPanel(upgrades,()->pages.show(screens,"stages"),()->{
             progress.complete(3);
             stageScreen.refreshProgress();
-            pages.show(screens, "stages");
-        }), "shop");
+            pages.show(screens,"stages");
+        }),"shop");
+
         setContentPane(screens);
+
         addWindowListener(new WindowAdapter() {
-            @Override public void windowOpened(WindowEvent event) { menu.focusStart(); }
+            @Override public void windowOpened(WindowEvent event) {menu.focusStart();}
         });
     }
 
-    private void showBattlePreview(int stage) {
-        if (!progress.canEnter(stage)) return;
-        // 3단계는 전투 패널을 생성하지 않고 상점 안내로 이동합니다.
-        if (stage == 3) {
-            if (battleScreen != null) {
-                screens.remove(battleScreen);
-                battleScreen = null;
-            }
-            pages.show(screens, "shop");
-            return;
-        }
-        // 체험에 다시 들어갈 때는 기존과 같이 새 전투로 시작합니다.
-        // 이전 패널을 제거해 중복 화면이 쌓이지 않도록 합니다.
-        if (battleScreen != null) screens.remove(battleScreen);
-        battleScreen = new BattleScreenPanel(() -> {
-            stageScreen.refreshProgress();
-            // 전투 메뉴의 메인으로 가기는 시작 화면으로 돌아갑니다. 진행도는 유지합니다.
-            pages.show(screens, "menu");
-            menu.focusStart();
-        }, stage, () -> {
-            progress.complete(stage);
-            stageScreen.refreshProgress();
-        }, deck.cards(), upgrades);
-        screens.add(battleScreen, "battle");
-        // 시작 화면에서 사용하던 창 크기를 유지하고 내용만 전투 화면으로 전환합니다.
-        pages.show(screens, "battle");
+    /** 전투 화면에서 스테이지 선택 화면으로 돌아갑니다. */
+    private void showStages() {
+        stageScreen.refreshProgress();
+        pages.show(screens,"stages");
         screens.revalidate();
         screens.repaint();
     }
 
+    private void showBattlePreview(int stage) {
+        if(!progress.canEnter(stage)) return;
+
+        if(stage==3) {
+            if(battleScreen!=null) {
+                screens.remove(battleScreen);
+                battleScreen=null;
+            }
+            pages.show(screens,"shop");
+            return;
+        }
+
+        if(battleScreen!=null) screens.remove(battleScreen);
+
+        battleScreen=new BattleScreenPanel(
+            ()->{
+                stageScreen.refreshProgress();
+                pages.show(screens,"menu");
+                menu.focusStart();
+            },
+            this::showStages,
+            stage,
+            ()->{
+                progress.complete(stage);
+                stageScreen.refreshProgress();
+            },
+            deck.cards(),
+            upgrades
+        );
+
+        screens.add(battleScreen,"battle");
+        pages.show(screens,"battle");
+        screens.revalidate();
+        screens.repaint();
+    }
 }
