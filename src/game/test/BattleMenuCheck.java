@@ -13,7 +13,7 @@ public final class BattleMenuCheck {
     public static void main(String[] args) throws Exception {
         SwingUtilities.invokeAndWait(()->{
             try {
-                int[] returns={0};var screen=new BattleScreenPanel(()->returns[0]++);screen.setSize(1100,690);layout(screen);
+                int[] returns={0},stages={0};var screen=new BattleScreenPanel(()->returns[0]++,()->stages[0]++,1,()->{},game.database.CardCatalog.allCards(),new game.backend.model.RunUpgrades());screen.setSize(1100,690);layout(screen);
                 JButton gear=(JButton)field(screen,"gearButton");JPanel menu=(JPanel)field(screen,"battleMenu");
                 if(menu.isVisible()) throw new AssertionError("메뉴 기본 닫힘");
                 gear.doClick();if(!menu.isVisible()) throw new AssertionError("메뉴 열기");
@@ -22,9 +22,11 @@ public final class BattleMenuCheck {
                 gear.doClick();((JButton)menu.getComponent(0)).doClick();
                 if(menu.isVisible()) throw new AssertionError("재시작 후 메뉴 닫힘");
                 gear.doClick();((JButton)menu.getComponent(1)).doClick();
+                if(stages[0]!=1 || returns[0]!=0 || menu.isVisible() || ((Timer)field(screen,"countdownTimer")).isRunning()) throw new AssertionError("스테이지로 이동");
+                gear.doClick();((JButton)menu.getComponent(2)).doClick();
                 if(returns[0]!=1 || ((Timer)field(screen,"phaseTimer")).isRunning() || ((Timer)field(screen,"countdownTimer")).isRunning()) throw new AssertionError("메인 복귀와 타이머 종료");
             } catch(Exception e) {throw new RuntimeException(e);}
         });
-        System.out.println("PASS: gear menu toggle, restart, main callback, timer cleanup, render");
+        System.out.println("PASS: gear menu toggle, restart, stage callback, main callback, timer cleanup, render");
     }
 }
