@@ -35,6 +35,21 @@ public final class NoEnergyRulesCheck {
         b.play(1);
         check(b.pendingAttack() == attack3, "공격 공개");
 
+        // 손패 유지: 쓰지 않은 카드는 다음 턴에도 남고, 쓴 자리만 새로 뽑음
+        DemoBattle k = new DemoBattle(c); k.enableReactions();
+        var before = new java.util.ArrayList<>(k.hand());
+        int healIndex = -1;
+        for (int i = 0; i < before.size(); i++) if (k.canPlay(i) && before.get(i).type() != game.backend.model.CardType.ATTACK) { healIndex = i; break; }
+        if (healIndex >= 0) {
+            Card used = before.get(healIndex);
+            k.play(healIndex);
+            k.startNextRound();
+            var kept = new java.util.ArrayList<>(before); kept.remove(used);
+            var now = new java.util.ArrayList<>(k.hand());
+            for (Card card : kept) check(now.remove(card), "쓰지 않은 카드 유지: " + card.name());
+            check(k.hand().size() == 5, "손패 5장으로 보충");
+        }
+
         // 상대 덱 소진 → 승리
         DemoBattle d = new DemoBattle(c); d.enableReactions();
         setHand(d, "enemyHand"); setHand(d, "enemyDraw");
@@ -56,7 +71,7 @@ public final class NoEnergyRulesCheck {
                 frame.dispose();
             } catch (Exception e) { throw new RuntimeException(e); }
         });
-        System.out.println("PASS: no energy (limits by card count), enemy deck-out = victory");
+        System.out.println("PASS: no energy (limits by card count), unused cards stay in hand, enemy deck-out = victory");
         System.exit(0);
     }
 }
