@@ -12,10 +12,7 @@ import game.backend.model.RunUpgrades;
 public final class Battle {
     public static final int PLAYER_MAX_HP = Player.MAX_HP;
     public static final int ENEMY_MAX_HP = Enemy.MAX_HP;
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/main
     private final Player player = new Player();
     private final Enemy enemy = new Enemy();
 
@@ -120,6 +117,12 @@ public final class Battle {
      * 사용해서 비어진 자리만 새 카드로 보충합니다.
      */
     private void drawToHandLimit() {
+        // 덱 없이 만든 전투(이전 시안·검사용)는 예전처럼 매 턴 고정 손패 5장을 받습니다.
+        if (deck == null) {
+            hand.clear();
+            hand.addAll(CardCatalog.sampleHand());
+            return;
+        }
         while (hand.size() < 5) {
             if (draw.isEmpty()) {
                 if (discard.isEmpty()) {
@@ -135,7 +138,6 @@ public final class Battle {
     }
 
     public boolean canPlay(int index) {
-<<<<<<< HEAD
         // 에너지 제한 없이 카드 장수 제한으로만 조절합니다.
         if (index < 0 || index >= hand.size()) {
             return false;
@@ -149,16 +151,6 @@ public final class Battle {
             if (!pendingEnemy || type != game.backend.model.CardType.DEFENSE) {
                 return false;
             }
-=======
-        // 잘못된 카드 위치, 전투 종료일 때 사용을 막습니다. (에너지 규칙 없음: 장수 제한으로만 조절)
-        if(index<0 || index>=hand.size()) return false;
-        var type=hand.get(index).type();
-
-        // 상대의 공격에 대응 중에는 방어 카드만 사용할 수 있으며,
-        // 방어 등급은 카드 왼쪽 위 숫자(cost = 등급) 기준으로 공격 등급 이상이어야 합니다.
-        if(pendingAttack!=null) {
-            if(!pendingEnemy || type!=game.backend.model.CardType.DEFENSE) return false;
->>>>>>> origin/main
             return hand.get(index).cost() >= pendingAttack.cost();
         }
 
@@ -255,22 +247,8 @@ public final class Battle {
     }
 
     public String endTurn() {
-<<<<<<< HEAD
         if (isOver()) {
             return "전투가 끝났습니다.";
-=======
-        // 적 공격 - 방어도만큼 피해. 음수 피해는 0으로 제한합니다.
-        // 살아 있으면 다음 턴: 고정 손패로 갱신합니다.
-        if (isOver()) return "전투가 끝났습니다.";
-        lastEnemyCard=null;
-        for(var poison:poisons) { enemy.takeDamage(poison[0]); poison[1]--; }
-        poisons.removeIf(p -> p[1]<=0);
-        if(enemy.isDefeated()) return "중독 피해로 승리!";
-        // 사용한 한 장만 제거합니다. 상대 손패는 연출 중 5 → 4장으로 유지됩니다.
-        int attack=enemyIntent();
-        if(deck!=null && !enemyHand.isEmpty()) {
-            lastEnemyCard=enemyHand.remove(0);enemyDiscard.add(lastEnemyCard);
->>>>>>> origin/main
         }
 
         lastEnemyCard = null;
@@ -302,14 +280,10 @@ public final class Battle {
         }
 
         turn++;
-<<<<<<< HEAD
 
         // 기존 손패는 유지하고, 사용해서 비어진 자리만 보충합니다.
         drawToHandLimit();
 
-=======
-        refill();
->>>>>>> origin/main
         return "적의 공격! 피해 " + damage + " · 새 턴 시작";
     }
 
@@ -369,7 +343,6 @@ public final class Battle {
     }
 
     public Card commitDefense(int index) {
-<<<<<<< HEAD
         if (!waitingForDefense() || !canPlay(index)) {
             return null;
         }
@@ -377,10 +350,6 @@ public final class Battle {
         Card card = hand.remove(index);
         discard.add(card);
         return card;
-=======
-        if(!waitingForDefense() || !canPlay(index)) return null;
-        Card card=hand.remove(index);discard.add(card);return card;
->>>>>>> origin/main
     }
 
     public String resolveAttack(Card defense) {
@@ -421,7 +390,6 @@ public final class Battle {
     }
 
     public void startNextRound() {
-<<<<<<< HEAD
         if (isOver() || pendingAttack != null) {
             return;
         }
@@ -453,15 +421,6 @@ public final class Battle {
         return turn;
     }
 
-=======
-        if(isOver() || pendingAttack!=null) return;
-        turn++;player.clearBlock();player.consumeBonusDamage();attackUsed=false;healUsed=false;spellUses=0;refill();
-    }
-    public int enemyHp() { return enemy.hp(); }
-    public int block() { return player.block(); }
-    public int bonus() { return player.bonusDamage(); }
-    public int turn() { return turn; }
->>>>>>> origin/main
     public int enemyIntent() {
         if (reactions) {
             return enemyHand.stream()
@@ -481,7 +440,6 @@ public final class Battle {
             fillEnemyHand();
         }
     }
-<<<<<<< HEAD
 
     private void fillEnemyHand() {
         // 적 덱은 소진되면 다시 섞지 않습니다.
@@ -534,17 +492,4 @@ public final class Battle {
     public int poisonDamage() {
         return poisons.stream().mapToInt(p -> p[0]).sum();
     }
-=======
-    public int enemyHandCount() {return enemyHand.size();}
-    public int enemyDrawCount() {return enemyDraw.size();}
-    public int enemyDiscardCount() {return enemyDiscard.size();}
-    public Card lastEnemyCard() {return lastEnemyCard;}
-    /** 전투가 끝났고 플레이어가 이겼는지. 적 체력 0 또는 적 덱 소진(플레이어 생존) 시 true. */
-    public boolean playerWon() { return isOver() && player.hp() > 0; }
-    public boolean isOver() { return player.hp() == 0 || enemy.isDefeated() || (pendingAttack == null && enemyHand.isEmpty() && enemyDraw.isEmpty()); }
-    public List<Card> hand() { return List.copyOf(hand); }
-    public int drawCount() { return draw.size(); }
-    public int discardCount() { return discard.size(); }
-    public int poisonDamage() { return poisons.stream().mapToInt(p -> p[0]).sum(); }
->>>>>>> origin/main
 }
