@@ -25,10 +25,10 @@ public final class DefenseResponseCheck {
         b.play(0);check(b.playerHp()==40 && b.enemyHp()==30,"회복 카드 사용");
         int before=b.playerHp();b.revealEnemyAttack();check(b.playerHp()==before && b.waitingForDefense(),"상대 공개 후 대기");
         check(b.canPlay(0) && !b.canPlay(1),"방어만 선택 가능");
-        defense=b.commitDefense(0);check(b.playerHp()==before && b.energy()==0,"방어 공개시 피해 없음 비용 소비");
+        defense=b.commitDefense(0);check(b.playerHp()==before,"방어 공개시 피해 없음");
         b.resolveAttack(defense);check(b.playerHp()==38 && b.enemyHp()==28,"플레이어 방어 판정");
         b.resolveAttack(defense);check(b.playerHp()==38,"중복 판정 방지");
-        b.startNextRound();check(b.energy()==3 && b.turn()==2 && b.hand().size()==5,"판정 후 다음 턴");
+        b.startNextRound();check(b.turn()==2 && b.hand().size()==5,"판정 후 다음 턴");
         setHand(b,"enemyHand",cards.get(0));b.revealEnemyAttack();b.resolveAttack(null);check(b.playerHp()==33,"방어 안 함");
         b.reset();check(b.pendingAttack()==null,"재시작 중 대기 공격 제거");
         setHand(b,"hand",cards.get(4));setHand(b,"enemyHand",cards.get(9));b.play(0);b.resolveAttack(b.chooseEnemyDefense());

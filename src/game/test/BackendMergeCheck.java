@@ -13,8 +13,6 @@ public final class BackendMergeCheck {
         check(player.takeDamage(3)==0 && player.block()==2,"방어 소모");
         check(player.takeDamage(7)==5 && player.hp()==35,"방어 후 피해");
         check(player.heal(20)==5 && player.hp()==40,"최대 체력");
-        player.spendEnergy(3);check(player.energy()==0,"에너지 소비");
-        try {player.spendEnergy(1);throw new AssertionError("에너지 검증");} catch(IllegalArgumentException expected) { }
         player.addBonusDamage(2);check(player.consumeBonusDamage()==2 && player.bonusDamage()==0,"보너스 소비");
         Enemy enemy=new Enemy();enemy.takeDamage(100);check(enemy.hp()==0 && enemy.isDefeated(),"체력 하한");
         Battle engine=new Battle();DemoBattle facade=new DemoBattle();

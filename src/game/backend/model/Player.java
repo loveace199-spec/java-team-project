@@ -7,7 +7,7 @@ package game.backend.model;
  * <ul>
  *   <li>Swing 화면을 전혀 알지 않습니다.</li>
  *   <li>카드가 어떻게 그려지는지도 알지 않습니다.</li>
- *   <li>플레이어의 HP, 에너지, 방어도처럼 "플레이어에게 속한 값"만 관리합니다.</li>
+ *   <li>플레이어의 HP, 방어도처럼 "플레이어에게 속한 값"만 관리합니다.</li>
  * </ul>
  *
  * <p>즉, 프론트(UI)는 이 객체의 값을 보여주고,
@@ -17,12 +17,8 @@ public final class Player {
     /** 전투 시작 시 플레이어 최대 체력 */
     public static final int MAX_HP = 40;
 
-    /** 턴마다 회복되는 기본 에너지 */
-    public static final int MAX_ENERGY = 3;
-
     private int maxHp = MAX_HP;
     private int hp;
-    private int energy;
     private int block;
     private int bonusDamage;
 
@@ -33,7 +29,6 @@ public final class Player {
     /** 플레이어를 전투 시작 상태로 되돌립니다. */
     public void reset() {
         hp = maxHp;
-        energy = MAX_ENERGY;
         block = 0;
         bonusDamage = 0;
     }
@@ -53,10 +48,6 @@ public final class Player {
         return hp;
     }
 
-    public int energy() {
-        return energy;
-    }
-
     public int block() {
         return block;
     }
@@ -64,19 +55,6 @@ public final class Player {
     /** 현재 턴에 다음 공격에 추가할 피해량입니다. */
     public int bonusDamage() {
         return bonusDamage;
-    }
-
-    /** 카드 사용 시 에너지를 차감합니다. */
-    public void spendEnergy(int amount) {
-        if (amount < 0 || amount > energy) {
-            throw new IllegalArgumentException("사용할 수 있는 에너지보다 큰 비용입니다.");
-        }
-        energy -= amount;
-    }
-
-    /** 턴 시작 시 에너지를 최대치로 회복합니다. */
-    public void refillEnergy() {
-        energy = MAX_ENERGY;
     }
 
     /** 방어도를 증가시킵니다. */

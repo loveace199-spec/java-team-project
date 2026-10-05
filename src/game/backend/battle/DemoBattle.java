@@ -19,7 +19,6 @@ public final class DemoBattle {
     public String endTurn() { return battle.endTurn(); }
     public int playerHp() { return battle.playerHp(); }
     public int enemyHp() { return battle.enemyHp(); }
-    public int energy() { return battle.energy(); }
     public int block() { return battle.block(); }
     public int bonus() { return battle.bonus(); }
     public int turn() { return battle.turn(); }
@@ -31,6 +30,7 @@ public final class DemoBattle {
     public int enemyDrawCount() { return battle.enemyDrawCount(); }
     public int enemyDiscardCount() { return battle.enemyDiscardCount(); }
     public boolean isOver() { return battle.isOver(); }
+    public boolean playerWon() { return battle.playerWon(); }
     public List<Card> hand() { return battle.hand(); }
     public Card pendingAttack() { return battle.pendingAttack(); }
     public boolean waitingForDefense() { return battle.waitingForDefense(); }

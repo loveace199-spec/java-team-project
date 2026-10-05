@@ -12,7 +12,6 @@ import game.backend.model.RunUpgrades;
 public final class Battle {
     public static final int PLAYER_MAX_HP = Player.MAX_HP;
     public static final int ENEMY_MAX_HP = Enemy.MAX_HP;
-    public static final int MAX_ENERGY = Player.MAX_ENERGY;
     private final Player player = new Player();
     private final Enemy enemy = new Enemy();
     // 상점 강화(공격 +1, 방어 +1, 체력 +10). 상점을 이용하지 않았으면 모두 0입니다.
@@ -67,12 +66,12 @@ public final class Battle {
     }
 
     public boolean canPlay(int index) {
-        // 잘못된 카드 위치, 전투 종료, 에너지 부족일 때 사용을 막습니다.
-        if(index<0 || index>=hand.size() || hand.get(index).cost()>player.energy()) return false;
+        // 잘못된 카드 위치, 전투 종료일 때 사용을 막습니다. (에너지 규칙 없음: 장수 제한으로만 조절)
+        if(index<0 || index>=hand.size()) return false;
         var type=hand.get(index).type();
 
         // 상대의 공격에 대응 중에는 방어 카드만 사용할 수 있으며,
-        // 방어 등급은 카드의 에너지 비용을 기준으로 공격 등급 이상이어야 합니다.
+        // 방어 등급은 카드 왼쪽 위 숫자(cost = 등급) 기준으로 공격 등급 이상이어야 합니다.
         if(pendingAttack!=null) {
             if(!pendingEnemy || type!=game.backend.model.CardType.DEFENSE) return false;
             return hand.get(index).cost() >= pendingAttack.cost();
@@ -92,7 +91,6 @@ public final class Battle {
         // 카드 한 장 사용: 가능 여부 검사 → 손패 제거 → 비용 지불 → 효과 적용.
         if (!canPlay(index)) return "카드를 사용할 수 없습니다.";
         Card card = hand.remove(index);
-        player.spendEnergy(card.cost());
         discard.add(card);
         if(reactions && card.type()==game.backend.model.CardType.ATTACK) {
             attackUsed=true;pendingAttack=card;pendingEnemy=false;
@@ -138,7 +136,7 @@ public final class Battle {
 
     public String endTurn() {
         // 적 공격 - 방어도만큼 피해. 음수 피해는 0으로 제한합니다.
-        // 살아 있으면 다음 턴: 에너지 3, 고정 손패로 갱신합니다.
+        // 살아 있으면 다음 턴: 고정 손패로 갱신합니다.
         if (isOver()) return "전투가 끝났습니다.";
         lastEnemyCard=null;
         for(var poison:poisons) { enemy.takeDamage(poison[0]); poison[1]--; }
@@ -154,7 +152,6 @@ public final class Battle {
         player.consumeBonusDamage();
         if (player.hp() == 0) return "적의 공격! 피해 " + damage + " — 패배";
         turn++;
-        player.refillEnergy();
         refill();
         return "적의 공격! 피해 " + damage + " · 새 턴 시작";
     }
@@ -182,7 +179,7 @@ public final class Battle {
     }
     public Card commitDefense(int index) {
         if(!waitingForDefense() || !canPlay(index)) return null;
-        Card card=hand.remove(index);player.spendEnergy(card.cost());discard.add(card);return card;
+        Card card=hand.remove(index);discard.add(card);return card;
     }
     public String resolveAttack(Card defense) {
         if(pendingAttack==null) return "대기 중인 공격 없음";
@@ -199,10 +196,9 @@ public final class Battle {
     }
     public void startNextRound() {
         if(isOver() || pendingAttack!=null) return;
-        turn++;player.refillEnergy();player.clearBlock();player.consumeBonusDamage();attackUsed=false;healUsed=false;spellUses=0;refill();
+        turn++;player.clearBlock();player.consumeBonusDamage();attackUsed=false;healUsed=false;spellUses=0;refill();
     }
     public int enemyHp() { return enemy.hp(); }
-    public int energy() { return player.energy(); }
     public int block() { return player.block(); }
     public int bonus() { return player.bonusDamage(); }
     public int turn() { return turn; }
@@ -222,6 +218,8 @@ public final class Battle {
     public int enemyDrawCount() {return enemyDraw.size();}
     public int enemyDiscardCount() {return enemyDiscard.size();}
     public Card lastEnemyCard() {return lastEnemyCard;}
+    /** 전투가 끝났고 플레이어가 이겼는지. 적 체력 0 또는 적 덱 소진(플레이어 생존) 시 true. */
+    public boolean playerWon() { return isOver() && player.hp() > 0; }
     public boolean isOver() { return player.hp() == 0 || enemy.isDefeated() || (pendingAttack == null && enemyHand.isEmpty() && enemyDraw.isEmpty()); }
     public List<Card> hand() { return List.copyOf(hand); }
     public int drawCount() { return draw.size(); }

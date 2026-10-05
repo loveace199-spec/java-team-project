@@ -44,7 +44,7 @@ public final class CardCatalog {
     }
 
     public static List<Card> sampleHand() {
-        // [카드 제작] new Card(식별자, 표시 이름, 종류, 에너지 비용, 효과 수치, 설명).
+        // [카드 제작] new Card(식별자, 표시 이름, 종류, 등급(왼쪽 위 숫자), 효과 수치, 설명).
         // power의 의미는 종류마다 다릅니다: 피해 / 방어도 / 회복량 / 다음 공격 추가 피해.
         // 설명은 수치에서 자동 생성되지 않습니다. 수치를 바꾸면 설명도 함께 수정하세요.
         return List.of(
