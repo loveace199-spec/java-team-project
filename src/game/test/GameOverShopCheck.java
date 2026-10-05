@@ -36,14 +36,14 @@ public final class GameOverShopCheck {
         up.apply(ShopItem.ATTACK_UP); up.apply(ShopItem.DEFENSE_UP); up.apply(ShopItem.HEAL_10);
         check(up.attackBonus() == 1 && up.defenseBonus() == 1 && up.bonusHp() == 10, "강화 누적");
         DemoBattle b = new DemoBattle(cards, up); b.enableReactions();
-        check(b.playerMaxHp() == 50 && b.playerHp() == 50, "체력 +10 으로 시작");
+        check(b.playerMaxHp() == 40 && b.playerHp() == 40, "최대 체력은 40으로 제한");
         setHand(b, "hand", cards.get(0), cards.get(15), cards.get(5)); setHand(b, "enemyHand", cards.get(5), cards.get(0));
         b.play(0); b.resolveAttack(b.chooseEnemyDefense());
         check(b.enemyHp() == 32, "공격 +1: 피해 2 → 3 (적 35 → 32), 실제 " + b.enemyHp());
         int hp = b.playerHp();
         b.revealEnemyAttack(); var def = b.commitDefense(1); b.resolveAttack(def);
         check(hp - b.playerHp() == 1, "방어 +1: 받는 피해 2 → 1, 실제 " + (hp - b.playerHp()));
-        b.reset(); check(b.playerHp() == 50, "재시작해도 강화 유지");
+        b.reset(); check(b.playerHp() == 40, "재시작해도 최대 체력 40 유지");
         DemoBattle plain = new DemoBattle(cards); check(plain.playerMaxHp() == 40, "강화 없으면 체력 40");
 
         SwingUtilities.invokeAndWait(() -> {
