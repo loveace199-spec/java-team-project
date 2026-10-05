@@ -21,13 +21,13 @@ public final class CardView extends JButton {
         setBorderPainted(false);
         setFocusPainted(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        setToolTipText(card.name() + " · 비용 " + card.cost() + " · " + card.description());
+        setToolTipText(card.name() + " · " + card.cost() + "등급 · " + card.description());
         getAccessibleContext().setAccessibleName(card.name() + ", " + card.description());
         addActionListener(event -> onUse.run());
     }
 
     @Override protected void paintComponent(Graphics graphics) {
-        // [카드 디자인 수정] 아래 코드는 카드 테두리 → 비용/이름 → 아이콘 → 설명 순서입니다.
+        // [카드 디자인 수정] 아래 코드는 카드 테두리 → 등급/이름 → 아이콘 → 설명 순서입니다.
         super.paintComponent(graphics);
         Graphics2D g = (Graphics2D) graphics.create();
         if(!isEnabled()) g.setComposite(AlphaComposite.SrcOver.derive(0.42f));

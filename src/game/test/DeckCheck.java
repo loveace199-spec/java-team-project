@@ -42,7 +42,6 @@ public final class DeckCheck {
                 var effect=CardCatalog.effect(target);battle.play(index);
                 check(battle.enemyHp()==35-effect.damage(),"직접 피해: "+target.name());
                 check(battle.block()==effect.block(),"방어: "+target.name());
-                check(battle.energy()==3-target.cost(),"비용: "+target.name());
                 check(battle.discardCount()==1 && battle.hand().size()==4,"사용 카드 버리기");
                 if(effect.poison()>0) {
                     for(int turn=0;turn<effect.duration() && !battle.isOver();turn++) {restoreTestHealth(battle);battle.endTurn();}

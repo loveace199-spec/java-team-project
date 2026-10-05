@@ -10,12 +10,12 @@ import javax.swing.JComponent;
 
 /**
  * 손패 카드 위에 마우스를 올렸을 때 카드 위쪽에 뜨는 설명 상자.
- * 이름 · 종류 · 비용 · 효과 · 사용 규칙 · (사용 못 하는 이유)를 보여줍니다.
+ * 이름 · 종류 · 등급 · 효과 · 사용 규칙 · (사용 못 하는 이유)를 보여줍니다.
  */
 public final class CardInfoPopup extends JComponent {
     private static final int WIDTH = 280;
     private Card card;
-    private String status; // 예: "에너지 부족" (사용 가능하면 null)
+    private String status; // 예: "이번 턴에 공격 카드를 이미 사용" (사용 가능하면 null)
 
     public CardInfoPopup() {
         setOpaque(false);
@@ -47,10 +47,10 @@ public final class CardInfoPopup extends JComponent {
     /** 종류별 사용 규칙 (게임 설명의 '카드 사용 규칙'과 같은 내용). */
     static String rule(CardType type) {
         return switch (type) {
-            case ATTACK -> "내 턴에 1장 · 상대가 방어 카드로 막을 수 있음";
+            case ATTACK -> "내 턴에 1장 · 같거나 높은 등급의 방어로 막힘";
             case HEAL -> "내 턴에 1장 사용 가능";
-            case DEFENSE -> "상대가 공격할 때만 사용 가능";
-            case SPELL -> "공격·회복 제한과 관계없이 사용 가능";
+            case DEFENSE -> "상대 공격 때만 · 공격과 같거나 높은 등급";
+            case SPELL -> "내 턴에 최대 2장";
         };
     }
 
@@ -88,7 +88,7 @@ public final class CardInfoPopup extends JComponent {
         g.setColor(accent);
         g.fillRoundRect(1, 1, 8, h - 3, 6, 6);
 
-        // 비용 원
+        // 등급 원 (카드 왼쪽 위 숫자)
         g.setColor(accent);
         g.fillOval(w - 48, 12, 34, 34);
         g.setColor(Color.WHITE);
@@ -102,7 +102,7 @@ public final class CardInfoPopup extends JComponent {
         g.drawString(card.name(), 20, 32);
         g.setFont(Theme.font(Font.BOLD, 13));
         g.setColor(accent.brighter());
-        g.drawString(card.type().label() + " 카드 · 에너지 " + card.cost(), 20, 52);
+        g.drawString(card.type().label() + " 카드 · " + card.cost() + "등급", 20, 52);
 
         // 효과 설명
         g.setFont(Theme.font(Font.PLAIN, 14));

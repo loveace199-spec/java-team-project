@@ -27,7 +27,7 @@ public final class HandPanel extends JPanel {
         setBackground(Theme.BACKGROUND);
     }
 
-    public void showCards(List<Card> cards, int energy, boolean finished, IntConsumer onUse) {
+    public void showCards(List<Card> cards, boolean finished, IntConsumer onUse) {
         // 이전 카드 컴포넌트를 지우고 현재 손패 목록으로 새 카드 버튼을 만듭니다.
         // 여기서 removeAll은 화면 컴포넌트 제거이며 게임 데이터 삭제가 아닙니다.
         if (onHoverEnd != null) onHoverEnd.run(); // 카드를 새로 만들면 이전 설명은 닫습니다.
@@ -36,7 +36,7 @@ public final class HandPanel extends JPanel {
             // 클릭할 때 사용할 손패 위치를 보관합니다. 같은 종류 카드도 위치로 구분됩니다.
             final int index = i;
             CardView view = new CardView(cards.get(i), () -> onUse.accept(index));
-            view.setEnabled(!finished && cards.get(i).cost() <= energy);
+            view.setEnabled(!finished);
             if (onHover != null) {
                 ToolTipManager.sharedInstance().unregisterComponent(view); // 기본 말풍선 대신 큰 설명 상자
                 view.addMouseListener(new java.awt.event.MouseAdapter() {

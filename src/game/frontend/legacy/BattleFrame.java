@@ -52,7 +52,7 @@ public final class BattleFrame extends JFrame {
         cards.setBorder(null);
         cards.setPreferredSize(new Dimension(1000, 282));
         controls.add(cards, BorderLayout.CENTER);
-        JLabel help = label("카드 클릭: 사용  |  Tab 이동 + Space 사용  |  흐린 카드: 에너지 부족 또는 전투 종료", 12);
+        JLabel help = label("카드 클릭: 사용  |  Tab 이동 + Space 사용  |  흐린 카드: 지금 사용 불가 또는 전투 종료", 12);
         help.setForeground(Theme.MUTED);
         controls.add(help, BorderLayout.SOUTH);
         center.add(controls, BorderLayout.SOUTH);
@@ -74,9 +74,9 @@ public final class BattleFrame extends JFrame {
         enemy.setText("탑의 파수꾼    체력 " + battle.enemyHp() + "/" + DemoBattle.ENEMY_MAX_HP
             + (battle.isOver() ? "    · 전투 종료" : "    |    다음 행동: 공격 " + battle.enemyIntent()));
         player.setText("플레이어   체력 " + battle.playerHp() + "/" + DemoBattle.PLAYER_MAX_HP
-            + "      방어도 " + battle.block() + "      에너지 " + battle.energy() + "/3"
+            + "      방어도 " + battle.block()
             + "      다음 공격 추가 피해 +" + battle.bonus());
-        hand.showCards(battle.hand(), battle.energy(), battle.isOver(), index -> {
+        hand.showCards(battle.hand(), battle.isOver(), index -> {
             message.setText(battle.play(index));
             refresh();
         });

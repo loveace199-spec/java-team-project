@@ -36,7 +36,7 @@ public final class MinimalStartPanel extends JPanel {
         guide.add(StartComponents.text("HOW TO PLAY", 13, muted));
         guide.add(Box.createVerticalStrut(28));
         String[] titles = {"01   적의 행동 확인", "02   카드 선택", "03   턴 종료"};
-        String[] details = {"다가올 공격을 보고 준비하세요.", "에너지 안에서 효과를 조합하세요.", "공격을 버티고 다음 수를 생각하세요."};
+        String[] details = {"다가올 공격을 보고 준비하세요.", "카드 효과를 조합하세요.", "공격을 버티고 다음 수를 생각하세요."};
         for (int i = 0; i < titles.length; i++) {
             guide.add(StartComponents.text(titles[i], 21, ink));
             guide.add(Box.createVerticalStrut(10));

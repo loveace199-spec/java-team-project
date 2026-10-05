@@ -30,7 +30,7 @@ public final class CardStartPanel extends JPanel {
         for (int i = 0; i < 4; i++) {
             var card = cards.get(i);
             CardView view = new CardView(card, () -> JOptionPane.showMessageDialog(this,
-                card.description() + "\n에너지 비용: " + card.cost(), card.name(), JOptionPane.INFORMATION_MESSAGE));
+                card.description() + "\n등급: " + card.cost(), card.name(), JOptionPane.INFORMATION_MESSAGE));
             view.setPreferredSize(new Dimension(180, 230));
             view.setMinimumSize(new Dimension(180, 230));
             gallery.add(view, cell);
