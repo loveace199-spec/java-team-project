@@ -22,6 +22,28 @@ public final class HandPanel extends JPanel {
         this.onHoverEnd = onHoverEnd;
     }
 
+    /** 손패 index 번째 카드 (화면에 겹쳐 그리는 순서와 상관없이). */
+    public CardView cardAt(int index) {
+        for (java.awt.Component c : getComponents()) if (c instanceof CardView v && v.handIndex() == index) return v;
+        return null;
+    }
+
+    /** 카드가 겹칠 때 오른쪽 카드가 위에 오도록 그리는 순서를 맞춥니다. */
+    void restoreOrder() {
+        int count = getComponentCount();
+        java.util.List<CardView> views = new java.util.ArrayList<>();
+        for (java.awt.Component c : getComponents()) if (c instanceof CardView v) views.add(v);
+        views.sort(java.util.Comparator.comparingInt(CardView::handIndex));
+        for (CardView v : views) setComponentZOrder(v, count - 1 - v.handIndex());
+        repaint();
+    }
+
+    /** 마우스를 올린 카드를 맨 앞으로 꺼냅니다. */
+    void bringToFront(CardView view) {
+        setComponentZOrder(view, 0);
+        repaint();
+    }
+
     public HandPanel() {
         super(new FlowLayout(FlowLayout.CENTER, 12, 12));
         setBackground(Theme.BACKGROUND);
@@ -36,16 +58,18 @@ public final class HandPanel extends JPanel {
             // 클릭할 때 사용할 손패 위치를 보관합니다. 같은 종류 카드도 위치로 구분됩니다.
             final int index = i;
             CardView view = new CardView(cards.get(i), () -> onUse.accept(index));
+            view.setHandIndex(i);
             view.setEnabled(!finished);
             if (onHover != null) {
                 ToolTipManager.sharedInstance().unregisterComponent(view); // 기본 말풍선 대신 큰 설명 상자
                 view.addMouseListener(new java.awt.event.MouseAdapter() {
-                    @Override public void mouseEntered(java.awt.event.MouseEvent e) { onHover.accept(view, index); }
-                    @Override public void mouseExited(java.awt.event.MouseEvent e) { onHoverEnd.run(); }
+                    @Override public void mouseEntered(java.awt.event.MouseEvent e) { bringToFront(view); onHover.accept(view, index); }
+                    @Override public void mouseExited(java.awt.event.MouseEvent e) { restoreOrder(); onHoverEnd.run(); }
                 });
             }
             add(view);
         }
+        restoreOrder();
         revalidate();
         repaint();
     }

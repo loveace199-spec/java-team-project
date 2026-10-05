@@ -28,8 +28,8 @@ public final class DefenseUiCheck {
         SwingUtilities.invokeAndWait(()->{
             try {
                 var p=screen[0];var hand=(HandPanel)field(p,"hand");
-                if(!((JButton)field(p,"skipDefense")).isVisible() || !hand.getComponent(0).isEnabled() || hand.getComponent(1).isEnabled()) throw new AssertionError("방어 선택 UI");
-                ((JButton)hand.getComponent(0)).doClick();
+                if(!((JButton)field(p,"skipDefense")).isVisible() || !hand.cardAt(0).isEnabled() || hand.cardAt(1).isEnabled()) throw new AssertionError("방어 선택 UI");
+                hand.cardAt(0).doClick();
                 if(((DemoBattle)field(p,"battle")).playerHp()!=40) throw new AssertionError("방어 연출 전 피해");
             } catch(Exception ex) {throw new RuntimeException(ex);}
         });

@@ -47,8 +47,13 @@ public final class NoEnergyRulesCheck {
             var kept = new java.util.ArrayList<>(before); kept.remove(used);
             var now = new java.util.ArrayList<>(k.hand());
             for (Card card : kept) check(now.remove(card), "쓰지 않은 카드 유지: " + card.name());
-            check(k.hand().size() == 5, "손패 5장으로 보충");
+            check(k.hand().size() == 5, "1장 쓰고 1장 뽑아 5장");
         }
+
+        // 손패는 5장을 넘어도 버리지 않고 최대 20장까지
+        DemoBattle g = new DemoBattle(c); g.enableReactions();
+        for (int t = 0; t < 30; t++) g.startNextRound();
+        check(g.hand().size() == DemoBattle.MAX_HAND && g.drawCount() == 0, "카드를 안 쓰면 20장까지 쌓임, 실제 " + g.hand().size());
 
         // 상대 덱 소진 → 승리
         DemoBattle d = new DemoBattle(c); d.enableReactions();
@@ -71,7 +76,7 @@ public final class NoEnergyRulesCheck {
                 frame.dispose();
             } catch (Exception e) { throw new RuntimeException(e); }
         });
-        System.out.println("PASS: no energy (limits by card count), unused cards stay in hand, enemy deck-out = victory");
+        System.out.println("PASS: no energy, unused cards stay, 1 draw per turn up to 20 cards, enemy deck-out = victory");
         System.exit(0);
     }
 }

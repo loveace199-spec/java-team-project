@@ -12,6 +12,10 @@ public final class CardView extends JButton {
     // 이 클래스는 외형만 담당하며, 카드 효과는 onUse로 외부에 전달합니다.
     private final Card card;
     private boolean fillSlot;
+    // 손패에서 몇 번째 카드인지 (겹쳐 보일 때 화면 순서와 달라질 수 있어 따로 보관)
+    private int handIndex = -1;
+    public int handIndex() { return handIndex; }
+    public void setHandIndex(int handIndex) { this.handIndex = handIndex; }
     public void setFillSlot(boolean fillSlot) { this.fillSlot=fillSlot; }
 
     public CardView(Card card, Runnable onUse) {
@@ -30,13 +34,15 @@ public final class CardView extends JButton {
         // [카드 디자인 수정] 아래 코드는 카드 테두리 → 등급/이름 → 아이콘 → 설명 순서입니다.
         super.paintComponent(graphics);
         Graphics2D g = (Graphics2D) graphics.create();
-        if(!isEnabled()) g.setComposite(AlphaComposite.SrcOver.derive(0.42f));
         if(CardArtwork.paint(g,card,getWidth(),getHeight(),fillSlot)) {
+            // 지금 못 쓰는 카드는 반투명 대신 어둡게 덮습니다. (카드가 겹쳐도 뒤 카드가 비치지 않게)
+            if(!isEnabled()) { g.setColor(new Color(0,0,0,150)); g.fillRect(0,0,getWidth(),getHeight()); }
             if(isFocusOwner() || getModel().isRollover()) {
                 g.setColor(Theme.GOLD); g.drawRect(1,1,getWidth()-3,getHeight()-3);
             }
             g.dispose(); return;
         }
+        if(!isEnabled()) g.setComposite(AlphaComposite.SrcOver.derive(0.42f));
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         // 기준 도화지는 180×246입니다. 실제 카드 크기가 달라도 비례해서 그립니다.
         g.scale(getWidth() / 180.0, getHeight() / 246.0);

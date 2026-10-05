@@ -15,6 +15,13 @@ public final class CardTrayPainter {
         int margin=22,gap=5, width=(w-2*margin-gap*4)/5;
         return new Rectangle(margin+index*(width+gap),40,width,h-65);
     }
+    /** 카드가 count 장일 때 index 번째 카드 위치. 5장 이하는 칸에 맞추고, 넘으면 같은 크기로 겹쳐 펼칩니다. */
+    static Rectangle slot(int w,int h,int index,int count) {
+        if(count<=5) return slot(w,h,index);
+        int margin=22, width=(w-2*margin-5*4)/5;
+        double step=(w-2*margin-width)/(double)(count-1);
+        return new Rectangle(margin+(int)Math.round(index*step),40,width,h-65);
+    }
     static void paint(Graphics2D original,Rectangle area,String title,int count,int draw,int discard,boolean enemy) {
         Graphics2D g=(Graphics2D)original.create();g.translate(area.x,area.y);
         int w=area.width,h=area.height;
@@ -35,7 +42,8 @@ public final class CardTrayPainter {
         g.setColor(new Color(24,35,54));g.fillRoundRect(badgeX,17,40,17,5,5);
         g.setColor(new Color(112,133,165));g.drawRoundRect(badgeX,17,40,17,5,5);
         g.setColor(new Color(203,221,245));g.drawString(count+"장",badgeX+8,30);
-        for(int i=0;i<5;i++) {
+        // 빈 칸 5개는 카드가 5장 이하일 때만 그립니다. (넘으면 카드가 겹쳐 펼쳐짐)
+        for(int i=0;i<(count>5?0:5);i++) {
             Rectangle s=slot(w,h,i);
             g.setPaint(new GradientPaint(s.x,s.y,new Color(22,25,27),s.x,s.y+s.height,new Color(5,8,12)));
             g.fillRoundRect(s.x,s.y,s.width,s.height,8,8);

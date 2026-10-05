@@ -7,6 +7,7 @@ import game.backend.model.Card;
 public final class DemoBattle {
     public static final int PLAYER_MAX_HP=Battle.PLAYER_MAX_HP;
     public static final int ENEMY_MAX_HP=Battle.ENEMY_MAX_HP;
+    public static final int MAX_HAND=Battle.MAX_HAND;
     private final Battle battle;
     public DemoBattle() { battle=new Battle(); }
     public DemoBattle(List<Card> cards) { battle=new Battle(cards); }
