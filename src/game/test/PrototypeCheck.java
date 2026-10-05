@@ -16,16 +16,13 @@ public final class PrototypeCheck {
         DemoBattle battle = new DemoBattle();
         battle.play(3); // 집중
         battle.play(0); // 베기: 6 + 2
-        check(battle.enemyHp() == 27 && battle.energy() == 2, "공격과 비용");
+        check(battle.enemyHp() == 27, "공격 + 집중 보너스");
         battle.play(0); // 방패
         battle.endTurn();
         check(battle.playerHp() == 38 && battle.block() == 0, "피해와 방어 초기화");
         battle.play(2); // 회복: 최대 체력 제한
         check(battle.playerHp() == 40, "최대 체력");
-        battle.play(4); // 인덱스 범위 밖: 상태 변화 없어야 함
-        check(battle.energy() == 2, "잘못된 인덱스");
-        battle.play(3); // 강타, 에너지 0
-        check(!battle.canPlay(0), "에너지 부족");
+        check(!battle.canPlay(9) && battle.play(9).contains("사용할 수 없"), "잘못된 인덱스");
         battle.reset();
         for (int i = 0; i < 3; i++) {
             battle.play(4);
@@ -37,10 +34,10 @@ public final class PrototypeCheck {
         while (!battle.isOver()) battle.endTurn();
         check(battle.playerHp() == 0, "패배");
         battle.reset();
-        check(battle.hand().size() == 5 && battle.energy() == 3, "재시작");
+        check(battle.hand().size() == 5 && battle.playerHp() == 40, "재시작");
         SwingUtilities.invokeAndWait(() -> {
             HandPanel hand = new HandPanel();
-            hand.showCards(CardCatalog.sampleHand(), 3, false, index -> { });
+            hand.showCards(CardCatalog.sampleHand(), false, index -> { });
             check(hand.getComponentCount() == 5, "손패 컴포넌트");
             for (var card : CardCatalog.sampleHand()) {
                 CardView view = new CardView(card, () -> { });

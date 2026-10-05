@@ -115,7 +115,7 @@ public final class BattleBoardPanel extends JPanel {
         g.setColor(new Color(6, 12, 18, 155));
         g.fillRoundRect(cx - 112, h / 2 - 25, 224, 48, 24, 24);
         g.setFont(Theme.font(Font.BOLD, 15));
-        center(g, battle.isOver() ? (battle.enemyHp() == 0 ? "전투 승리" : "전투 패배") : "내 턴 · 카드 선택", cx, h / 2 + 6, Theme.TEXT);
+        center(g, battle.isOver() ? (battle.playerWon() ? "전투 승리" : "전투 패배") : "내 턴 · 카드 선택", cx, h / 2 + 6, Theme.TEXT);
         // 배경 원본의 빈 캐릭터 프레임 중심 비율을 사용합니다.
         // 고정 픽셀 좌표가 아니므로 창 크기를 바꿔도 두 캐릭터가 각 프레임 안에 유지됩니다.
         int enemyY = (int) (h * 0.105);
@@ -125,13 +125,6 @@ public final class BattleBoardPanel extends JPanel {
         portrait(g, cx, playerY, false, battle.playerHp(), battle.playerMaxHp());
         // 초상화 옆 이름·상태 글자는 화면을 깔끔하게 하려고 표시하지 않습니다.
         paintFloatingNumbers(g, cx, enemyY, playerY);
-        g.setFont(Theme.font(Font.BOLD, 18));
-        g.setColor(Theme.GOLD);
-        g.drawString("에너지  " + battle.energy() + " / 3", 48, h - 72);
-        for (int i = 0; i < 3; i++) {
-            g.setColor(i < battle.energy() ? new Color(75, 182, 220) : new Color(61, 73, 83));
-            g.fillOval(50 + i * 27, h - 52, 17, 17);
-        }
         g.dispose();
     }
 

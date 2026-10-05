@@ -58,7 +58,7 @@ public final class DeckEditorPanel extends JPanel {
             if(copies>0) entries.addElement(card.name()+"  × "+copies);
             JPanel tile=new JPanel(new BorderLayout(2,4)); tile.setBackground(Theme.PANEL);
             CardView art=new CardView(card,()->JOptionPane.showMessageDialog(this,
-                card.name()+" / 비용 "+card.cost()+"\n"+card.description(),"카드 상세",JOptionPane.INFORMATION_MESSAGE));
+                card.name()+" / "+card.cost()+"등급"+"\n"+card.description(),"카드 상세",JOptionPane.INFORMATION_MESSAGE));
             art.setPreferredSize(new Dimension(128,146)); tile.add(art,BorderLayout.CENTER);
             JPanel controls=new JPanel(new BorderLayout());
             JButton minus=new JButton("−"), plus=new JButton("+");

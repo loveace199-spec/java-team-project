@@ -13,7 +13,7 @@ public final class BattleScreenPanel extends JPanel {
     private final ClashPanel clash=new ClashPanel();
     private final JButton skipDefense=button("방어 안 함",()->respondToAttack(-1));
 
-    // [역할 분리] battle: 체력/에너지 계산, board: 인물과 전장 그림, hand: 카드 나열.
+    // [역할 분리] battle: 체력·카드 규칙 계산, board: 인물과 전장 그림, hand: 카드 나열.
     private final DemoBattle battle;
     private final BattleBoardPanel board;
     private final HandPanel hand = new HandPanel();
@@ -165,7 +165,7 @@ public final class BattleScreenPanel extends JPanel {
             recordAction("상대",attack.name()+" 공개");
             effects.showAction(attack,"상대 공격 공개","방어 선택 후 피해 적용",true,()->{
                 turnPhase=TurnPhase.DEFENSE;secondsLeft=15;
-                message.setText("방어 카드를 선택하거나 방어 안 함을 누르세요. (남은 에너지 사용)");
+                message.setText("방어 카드를 선택하거나 방어 안 함을 누르세요. (공격과 같거나 높은 등급만 가능)");
                 board.setTurnTimer(secondsLeft,15,true);countdownTimer.restart();refresh();
             });
             refresh();
@@ -283,7 +283,7 @@ public final class BattleScreenPanel extends JPanel {
         // 카드 사용/턴 종료/재시작 후 최신 데이터를 화면에 다시 반영합니다.
         // 전투 수치는 DemoBattle에서 계산하고 이 메서드는 결과만 표시합니다.
         // 적 체력이 0이 된 경우에만 승리를 보고합니다. 돌아가기/패배는 클리어가 아닙니다.
-        if (battle.enemyHp() == 0 && !victoryReported && !effects.isPlaying()) {
+        if (battle.isOver() && battle.playerWon() && !victoryReported && !effects.isPlaying()) {
             victoryReported = true;
             onVictory.run();
             message.setText(stage + "단계 클리어! 톱니바퀴 메뉴에서 메인으로 돌아가세요.");
@@ -296,7 +296,7 @@ public final class BattleScreenPanel extends JPanel {
             return;
         }
         title.setText(stage + "단계 · 턴 " + battle.turn()+" · 뽑기 "+battle.drawCount()+" · 버림 "+battle.discardCount());
-        hand.showCards(battle.hand(), battle.energy(), effects.isPlaying() || battle.isOver() || turnPhase != TurnPhase.PLAYER_ACTIVE, index -> {
+        hand.showCards(battle.hand(), effects.isPlaying() || battle.isOver() || turnPhase != TurnPhase.PLAYER_ACTIVE, index -> {
             if(turnPhase==TurnPhase.DEFENSE) {respondToAttack(index);return;}
             if(effects.isPlaying() || turnPhase!=TurnPhase.PLAYER_ACTIVE || !battle.canPlay(index)) return;
             var card=battle.hand().get(index);
@@ -352,12 +352,16 @@ public final class BattleScreenPanel extends JPanel {
         String status=null;
         if(battle.isOver()) status="전투 종료";
         else if(effects.isPlaying()) status="연출 중";
-        else if(turnPhase==TurnPhase.DEFENSE) status=card.type()==game.backend.model.CardType.DEFENSE
-            ? (card.cost()>battle.energy()?"에너지 부족":null) : "지금은 방어 카드만 사용";
+        else if(turnPhase==TurnPhase.DEFENSE) status=card.type()!=game.backend.model.CardType.DEFENSE ? "지금은 방어 카드만 사용"
+            : (battle.canPlay(index) ? null : "공격("+(battle.pendingAttack()==null?"?":battle.pendingAttack().cost())+"등급)보다 낮은 등급");
         else if(turnPhase!=TurnPhase.PLAYER_ACTIVE) status="내 턴이 아님";
-        else if(card.cost()>battle.energy()) status="에너지 부족 ("+battle.energy()+"/"+card.cost()+")";
         else if(card.type()==game.backend.model.CardType.DEFENSE) status="상대 공격 때 사용";
-        else if(!battle.canPlay(index)) status="이번 턴에 공격/회복 카드를 이미 사용";
+        else if(!battle.canPlay(index)) status=switch(card.type()) {
+            case ATTACK -> "이번 턴에 공격 카드를 이미 사용";
+            case HEAL -> "이번 턴에 회복 카드를 이미 사용";
+            case SPELL -> "이번 턴에 주문 카드 2장을 이미 사용";
+            default -> "지금은 사용 불가";
+        };
         java.awt.Container layer=cardInfo.getParent();
         if(layer==null) return;
         Rectangle anchor=javax.swing.SwingUtilities.convertRectangle(view.getParent(),view.getBounds(),layer);
@@ -386,7 +390,7 @@ public final class BattleScreenPanel extends JPanel {
         }
     }
     private void completeEnemyRound() {
-        if(battle.isOver()) finishBattle(battle.enemyHp()==0);
+        if(battle.isOver()) finishBattle(battle.playerWon());
         else {battle.startNextRound();beginPlayerTurn();}
     }
 
