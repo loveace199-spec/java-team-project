@@ -28,7 +28,8 @@ public final class DefenseResponseCheck {
         defense=b.commitDefense(0);check(b.playerHp()==before,"방어 공개시 피해 없음");
         b.resolveAttack(defense);check(b.playerHp()==38 && b.enemyHp()==28,"플레이어 방어 판정");
         b.resolveAttack(defense);check(b.playerHp()==38,"중복 판정 방지");
-        b.startNextRound();check(b.turn()==2 && b.hand().size()==5,"판정 후 다음 턴");
+        int handBefore=b.hand().size();
+        b.startNextRound();check(b.turn()==2 && b.hand().size()==handBefore+1,"판정 후 다음 턴 (1장 드로우)");
         setHand(b,"enemyHand",cards.get(0));b.revealEnemyAttack();b.resolveAttack(null);check(b.playerHp()==33,"방어 안 함");
         b.reset();check(b.pendingAttack()==null,"재시작 중 대기 공격 제거");
         setHand(b,"hand",cards.get(4));setHand(b,"enemyHand",cards.get(9));b.play(0);b.resolveAttack(b.chooseEnemyDefense());

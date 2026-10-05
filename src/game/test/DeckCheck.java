@@ -32,7 +32,8 @@ public final class DeckCheck {
             battle.endTurn();
             check(battle.hand().size()+battle.drawCount()+battle.discardCount()==20,"카드 보존");
         }
-        check(battle.drawCount()==15 && battle.discardCount()==0,"버림 더미 재섞기");
+        // 새 규칙: 턴마다 1장만 뽑고(5 → 9장), 손패를 버리지 않으며 버린 카드를 다시 섞지 않습니다.
+        check(battle.hand().size()==9 && battle.drawCount()==11 && battle.discardCount()==0,"턴마다 1장 드로우 · 손패 유지");
         // 각 카드가 손에 들어올 때까지 새 전투를 생성해 원본 데이터의 효과를 검사합니다.
         for(Card target:CardCatalog.allCards()) {
             boolean tested=false;

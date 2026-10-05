@@ -149,7 +149,7 @@ public final class DeckEditorPanel extends JPanel {
             tile.setBackground(Theme.PANEL);
             tile.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(45, 59, 78), 1), BorderFactory.createEmptyBorder(5, 5, 6, 5)));
 
-            CardView art = new CardView(card, () -> JOptionPane.showMessageDialog(this, card.name() + " / 비용 " + card.cost() + "\n" + card.description(), "카드 상세", JOptionPane.INFORMATION_MESSAGE));
+            CardView art = new CardView(card, () -> JOptionPane.showMessageDialog(this, card.name() + " / " + card.cost() + "등급\n" + card.description(), "카드 상세", JOptionPane.INFORMATION_MESSAGE));
             art.setPreferredSize(new Dimension(128, 146));
             tile.add(art, BorderLayout.CENTER);
 

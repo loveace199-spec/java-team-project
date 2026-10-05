@@ -253,11 +253,14 @@ public final class BattleScreenPanel extends JPanel {
             // 배경 원본의 오른쪽 아래 카드 패널 비율에 맞춘 좌표입니다.
             Rectangle tray=CardTrayPainter.bounds(w,h,false);
             hand.setBounds(tray);
-            for(int i=0;i<hand.getComponentCount();i++) {
-                Rectangle slot=CardTrayPainter.slot(tray.width,tray.height,i);
+            int cardCount=hand.getComponentCount();
+            for(java.awt.Component c:hand.getComponents()) {
+                if(!(c instanceof CardView card)) continue;
+                // 5장 이하는 칸에 맞추고, 5장을 넘으면(최대 20장) 겹쳐서 모두 보이게 펼칩니다.
+                Rectangle slot=CardTrayPainter.slot(tray.width,tray.height,card.handIndex(),cardCount);
                 slot.grow(-3,-3);
-                if(hand.getComponent(i) instanceof CardView card) card.setFillSlot(true);
-                hand.getComponent(i).setBounds(slot);
+                card.setFillSlot(true);
+                card.setBounds(slot);
             }
 
 
@@ -333,7 +336,7 @@ public final class BattleScreenPanel extends JPanel {
             });
             refresh();
         });
-        for(int i=0;i<hand.getComponentCount();i++) hand.getComponent(i).setEnabled(
+        for(int i=0;i<hand.getComponentCount();i++) if(hand.cardAt(i)!=null) hand.cardAt(i).setEnabled(
             !effects.isPlaying() && (turnPhase==TurnPhase.PLAYER_ACTIVE || turnPhase==TurnPhase.DEFENSE) && battle.canPlay(i));
         skipDefense.setVisible(turnPhase==TurnPhase.DEFENSE);
         skipDefense.setEnabled(!effects.isPlaying());
