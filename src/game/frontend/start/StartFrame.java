@@ -21,7 +21,7 @@ public final class StartFrame extends JFrame {
     private final game.backend.model.PlayerDeck deck=new game.backend.model.PlayerDeck();
 
     public StartFrame() {
-        super("게임 타이틀 (미정)");
+        super(FantasyStartPanel.GAME_TITLE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1000,680));
         setSize(1100,730);
