@@ -11,8 +11,13 @@ import game.frontend.common.Theme;
 
 /** 배경·로고·버튼은 독립적으로 교체할 수 있습니다. */
 public final class FantasyStartPanel extends JPanel {
-    public static final String GAME_TITLE = "게임 타이틀"; // 이름 확정 후 변경
+    public static final String GAME_TITLE = "짜스톤";
     private final BufferedImage background;
+    /** 게임 제목 로고 (배경이 투명한 PNG). 원본: src/assets/title-logo-v1.png */
+    private final BufferedImage logo;
+    // 창 크기에 맞춰 줄인 로고. 매번 큰 원본을 줄이지 않도록 크기가 바뀔 때만 다시 만듭니다.
+    private Image scaledLogo;
+    private int scaledLogoWidth;
     private final FantasyMenuButton[] buttons;
     // 이 클래스는 시작 화면을 그립니다. 전투 규칙은 처리하지 않습니다.
     // Runnable 인수는 버튼 클릭 시 실행할 작업이며 StartFrame에서 전달합니다.
@@ -26,6 +31,7 @@ public final class FantasyStartPanel extends JPanel {
             background = ImageIO.read(stream);
             if (background == null) throw new IllegalStateException("탑 배경을 읽을 수 없습니다.");
         } catch (IOException e) { throw new IllegalStateException("배경 로드 실패",e); }
+        logo = readImage("/assets/title-logo-v1.png");
         // [메뉴 문구 수정] 버튼의 표시 순서는 이 배열의 순서입니다.
         buttons = new FantasyMenuButton[]{new FantasyMenuButton("게임 시작",start),
             new FantasyMenuButton("게임 설명",help), new FantasyMenuButton("설정",settings),
@@ -66,25 +72,34 @@ public final class FantasyStartPanel extends JPanel {
         // 배경 아래쪽을 어둡게 덮어 버튼 글자가 읽히도록 합니다. Color의 4번째 값은 불투명도입니다.
         g.setPaint(new GradientPaint(0,h*.45f,new Color(0,0,0,0),0,h,new Color(3,8,13,180)));
         g.fillRect(0,0,w,h);
-        // [로고 위치 수정] 탑 문양 → 제목 → 부제 순서로 그립니다.
-        int center=w/2, logoY=(int)(h*.16);
-        g.setColor(new Color(191,212,210));
-        g.setStroke(new BasicStroke(2));
-        g.drawPolygon(new int[]{center,center+18,center+12,center-12,center-18},
-            new int[]{logoY-27,logoY-6,logoY+19,logoY+19,logoY-6},5);
-        g.drawLine(center,logoY-15,center,logoY+11);
-        g.drawLine(center-92,logoY,center-33,logoY);
-        g.drawLine(center+33,logoY,center+92,logoY);
-        g.setFont(new Font("바탕",Font.BOLD,Math.min(68,w/16)));
-        int titleY=(int)(h*.32), titleX=(w-g.getFontMetrics().stringWidth(GAME_TITLE))/2;
-        g.setColor(new Color(0,0,0,190)); g.drawString(GAME_TITLE,titleX+3,titleY+4);
-        g.setColor(new Color(225,238,230)); g.drawString(GAME_TITLE,titleX,titleY);
-        g.setFont(Theme.font(Font.PLAIN,13));
-        centered(g,"이름 미정 · 시작 화면 시안",titleY+32,new Color(168,192,190));
-        centered(g,"카드 한 장으로 시작되는 탑의 여정",titleY+65,new Color(202,211,206));
+        // [로고 위치 수정] 화면 위쪽 ~ 메뉴 버튼 사이에 제목 로고를 가운데 맞춰 그립니다.
+        int menuTop=Math.min((int)(h*.57),h-260);
+        int logoTop=(int)(h*.03), logoBottom=menuTop-40;
+        int logoWidth=Math.min((int)(w*.62),(logoBottom-logoTop)*logo.getWidth()/logo.getHeight());
+        int logoHeight=logoWidth*logo.getHeight()/logo.getWidth();
+        if(logoWidth>0) g.drawImage(scaledLogo(logoWidth),(w-logoWidth)/2,logoTop,logoWidth,logoHeight,null);
+        g.setFont(Theme.font(Font.PLAIN,14));
+        centered(g,"카드 한 장으로 시작되는 탑의 여정",logoTop+logoHeight+22,new Color(202,211,206));
         g.setFont(Theme.font(Font.PLAIN,12));
         centered(g,"↑ ↓ 메뉴 선택     Enter 확인     마우스 클릭",h-20,new Color(163,178,179));
         g.dispose();
+    }
+    private Image scaledLogo(int width) {
+        if(scaledLogo==null || scaledLogoWidth!=width) {
+            // SCALE_SMOOTH: 크게 줄여도 글자 가장자리가 깨지지 않게 부드럽게 축소합니다.
+            scaledLogo=logo.getScaledInstance(width,-1,Image.SCALE_SMOOTH);
+            new ImageIcon(scaledLogo); // 축소가 끝날 때까지 기다립니다.
+            scaledLogoWidth=width;
+        }
+        return scaledLogo;
+    }
+    private static BufferedImage readImage(String path) {
+        try (var stream=FantasyStartPanel.class.getResourceAsStream(path)) {
+            if(stream==null) throw new IllegalStateException("이미지 리소스가 없습니다: "+path);
+            BufferedImage image=ImageIO.read(stream);
+            if(image==null) throw new IllegalStateException("이미지를 읽을 수 없습니다: "+path);
+            return image;
+        } catch(IOException e) { throw new IllegalStateException("이미지 로드 실패: "+path,e); }
     }
     private void centered(Graphics2D g,String text,int y,Color color) {
         g.setColor(color); g.drawString(text,(getWidth()-g.getFontMetrics().stringWidth(text))/2,y);
