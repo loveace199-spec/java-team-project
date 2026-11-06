@@ -14,6 +14,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-java -cp "bin;src" game.App
+rem 추가: lib 폴더의 JDBC 드라이버를 실행 시 함께 읽습니다.
+java -cp "bin;src;lib/*" game.App
 if errorlevel 1 pause
 endlocal

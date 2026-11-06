@@ -1,0 +1,2 @@
+INSERT INTO GAME_RUN (clearedStage)
+VALUES (0);

@@ -8,6 +8,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.*;
 import game.frontend.battle.BattleScreenPanel;
 import game.backend.model.StageProgress;
+import game.database.SaveStore;
 
 /** 탑 테마 메인 화면. 기존 3개 시안 클래스는 보존합니다. */
 public final class StartFrame extends JFrame {
@@ -15,10 +16,14 @@ public final class StartFrame extends JFrame {
     private final CardLayout pages=new CardLayout();
     private final JPanel screens=new JPanel(pages);
     private BattleScreenPanel battleScreen;
-    private final StageProgress progress=new StageProgress();
+    // 추가: 진행도·덱·상점보다 먼저 새 게임의 DB 저장 객체를 준비합니다.
+    private final SaveStore store=new SaveStore();
+    // 변경: 현재 게임의 진행도를 DB와 연결합니다.
+    private final StageProgress progress=new StageProgress(store);
     private final StageSelectPanel stageScreen;
     private final game.backend.model.RunUpgrades upgrades=new game.backend.model.RunUpgrades();
-    private final game.backend.model.PlayerDeck deck=new game.backend.model.PlayerDeck();
+    // 변경: 같은 저장 객체를 전달해 진행도와 덱이 동일한 게임을 사용합니다.
+    private final game.backend.model.PlayerDeck deck=new game.backend.model.PlayerDeck(store);
 
     public StartFrame() {
         super(FantasyStartPanel.GAME_TITLE);
@@ -47,7 +52,8 @@ public final class StartFrame extends JFrame {
 
         screens.add(stageScreen,"stages");
 
-        screens.add(new ShopPanel(upgrades,()->pages.show(screens,"stages"),()->{
+        // 변경: 상점도 현재 게임의 저장 객체를 공유합니다.
+        screens.add(new ShopPanel(upgrades,store,()->pages.show(screens,"stages"),()->{
             progress.complete(3);
             stageScreen.refreshProgress();
             pages.show(screens,"stages");

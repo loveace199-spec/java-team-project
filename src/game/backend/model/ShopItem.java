@@ -1,19 +1,24 @@
 package game.backend.model;
 
-/** 상점에서 고를 수 있는 강화 3종. 이름은 상점 그림의 문구와 같습니다. */
+import game.database.SaveStore;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/** 변경: 강화 종류는 유지하고 이름·설명·DB 번호는 REINFORCE에서 읽습니다. */
 public enum ShopItem {
-    ATTACK_UP("공격력 카드 +1", "내 공격 카드의 피해가 1 증가합니다."),
-    DEFENSE_UP("방어력 +1", "내 방어 카드로 막는 양이 1 증가합니다."),
-    HEAL_10("즉시 회복 +10", "다음 전투부터 체력이 10 더 많은 상태로 시작합니다.");
+    ATTACK_UP, DEFENSE_UP, HEAL_10;
 
-    private final String label;
-    private final String description;
+    // 추가: DB의 숫자 PK와 Java의 enum 코드를 구분해서 보관합니다.
+    private record Text(long databaseId, String code, String label, String description) { }
+    // 변경: 고정 이름·설명을 select_reinforce.sql 조회 결과로 교체합니다.
+    private static final Map<String, Text> TEXTS =
+        SaveStore.select("select_reinforce", row -> new Text(row.getLong("reinforceId"), row.getString("reinforceCode"),
+            row.getString("reinforceName"), row.getString("reinforceEffect")))
+            .stream().collect(Collectors.toMap(Text::code, text -> text));
 
-    ShopItem(String label, String description) {
-        this.label = label;
-        this.description = description;
-    }
-
-    public String label() { return label; }
-    public String description() { return description; }
+    // 추가: INVENTORY 저장에 사용할 숫자 reinforceId를 반환합니다.
+    public long databaseId() { return TEXTS.get(name()).databaseId(); }
+    // 변경: 화면의 기존 호출은 유지하고 DB에 등록된 글자를 반환합니다.
+    public String label() { return TEXTS.get(name()).label(); }
+    public String description() { return TEXTS.get(name()).description(); }
 }

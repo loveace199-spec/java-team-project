@@ -1,14 +1,22 @@
 package game.database;
 
-/** 단계별 상대 표시 정보. 전투 수치와 이미지 설정을 분리합니다. */
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/** 변경: 단계별 적의 이름·이미지를 STAGE_ENEMY 테이블에서 읽습니다. */
 public record StageEnemy(String name, String imagePath) {
+    // 추가: 단계 번호와 적 정보를 연결합니다.
+    private record Entry(int stage, StageEnemy enemy) { }
+    // 변경: 고정 switch 대신 select_stage.sql 조회 결과를 한 번 보관합니다.
+    private static final Map<Integer, StageEnemy> ENEMIES =
+        SaveStore.select("select_stage", row -> new Entry(row.getInt("stageNo"),
+            new StageEnemy(row.getString("enemyName"), row.getString("imagePath"))))
+            .stream().collect(Collectors.toMap(Entry::stage, Entry::enemy));
+
+    // 변경: 기존 화면 호출은 유지하고 DB에서 읽은 정보를 반환합니다.
     public static StageEnemy forStage(int stage) {
-        return switch (stage) {
-            case 1 -> new StageEnemy("스켈레톤", "/assets/skeleton-warrior-animated-v1.png");
-            case 2 -> new StageEnemy("미노타우르스", "/assets/enemy-stage2-minotaur-v1.png");
-            case 4 -> new StageEnemy("슬라임", "/assets/enemy-stage4-slime-v1.png");
-            case 5 -> new StageEnemy("역병의사", "/assets/enemy-stage5-plague-doctor-v1.png");
-            default -> throw new IllegalArgumentException("전투 단계가 아닙니다: " + stage);
-        };
+        StageEnemy enemy = ENEMIES.get(stage);
+        if (enemy == null) throw new IllegalArgumentException("전투 단계가 아닙니다: " + stage);
+        return enemy;
     }
 }

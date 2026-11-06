@@ -1,0 +1,2 @@
+DELETE FROM DECK_CARD
+WHERE deckId = ?;

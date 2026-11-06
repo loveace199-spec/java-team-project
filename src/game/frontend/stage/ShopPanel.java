@@ -2,6 +2,7 @@ package game.frontend.stage;
 
 import game.backend.model.RunUpgrades;
 import game.backend.model.ShopItem;
+import game.database.SaveStore;
 import game.frontend.common.ImageHotspotButton;
 import game.frontend.common.Images;
 import game.frontend.common.Theme;
@@ -23,6 +24,8 @@ public final class ShopPanel extends JPanel {
 
     private final BufferedImage image = Images.load(IMAGE, "상점 화면");
     private final RunUpgrades upgrades;
+    // 추가: 증강 선택을 저장할 현재 게임의 저장 객체를 전달받습니다.
+    private final SaveStore store;
     private final ImageHotspotButton[] cards = new ImageHotspotButton[ITEMS.length];
     private final FantasyMenuButton back;
     private final FantasyMenuButton next;
@@ -30,7 +33,20 @@ public final class ShopPanel extends JPanel {
     private String status = "카드 한 장을 골라 강화하세요. (한 번만 선택 가능)";
 
     public ShopPanel(RunUpgrades upgrades, Runnable onBack, Runnable onContinue) {
+        // 추가: 기존 시안·검사의 생성자 호출도 유지합니다.
+        this(upgrades, new SaveStore(), onBack, onContinue);
+    }
+
+    // 추가: 시작 화면에서 전달한 저장 객체와 기존 구매 상태를 사용합니다.
+    public ShopPanel(RunUpgrades upgrades, SaveStore store, Runnable onBack, Runnable onContinue) {
         this.upgrades = upgrades;
+        this.store = store;
+        // 추가: 구매 상태와 강화 효과를 함께 복원해 중복 선택을 막습니다.
+        purchased = store.loadUpgrade();
+        if (purchased != null) {
+            upgrades.apply(purchased);
+            status = purchased.label() + " 획득! " + purchased.description();
+        }
         setLayout(null);
         setBackground(Color.BLACK);
         for (int i = 0; i < ITEMS.length; i++) {
@@ -48,6 +64,8 @@ public final class ShopPanel extends JPanel {
     /** 카드 버튼을 눌렀을 때: 효과 적용 → 나머지 카드 잠금. */
     void buy(ShopItem item) {
         if (purchased != null) return;
+        // 추가: DB 저장 후에만 구매 표시와 실제 강화 효과를 적용합니다.
+        store.saveUpgrade(item);
         purchased = item;
         upgrades.apply(item);
         status = item.label() + " 획득! " + item.description();
